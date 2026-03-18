@@ -2,54 +2,60 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel - Assinar Documento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel — Assinador Digital</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        textarea { width: 100%; padding: 8px; font-size: 14px; box-sizing: border-box; }
+        button { padding: 8px 20px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+        #resultado { margin-top: 20px; padding: 14px; background: #f4f4f4; border: 1px solid #ccc; display: none; }
+        #resultado label { display: block; font-size: 12px; color: #555; margin-top: 10px; }
+        #resultado textarea { background: #fff; margin-top: 4px; }
+        .id-destaque { font-size: 22px; font-weight: bold; }
+        nav { margin-bottom: 16px; font-size: 13px; }
+    </style>
 </head>
-<body style="font-family: Arial; padding: 20px;">
-    <h2>Assinar um Texto</h2>
-    <p>Digite o texto que deseja assinar:</p>
-    
-    <textarea id="texto" rows="5" cols="50" placeholder="Digite aqui..."></textarea><br><br>
+<body>
+    <nav>Usuário: <strong id="username-display"></strong> — <a href="#" onclick="logout()">Sair</a></nav>
+    <h2>Assinar Documento</h2>
+    <textarea id="texto" rows="6" placeholder="Digite o texto a assinar..."></textarea>
+    <br>
     <button onclick="assinar()">Assinar Digitalmente</button>
-    
-    <div id="resultado" style="display: none; margin-top: 20px;">
-        <h3 style="color: green;">Documento Assinado!</h3>
-        <p>Copie a assinatura abaixo:</p>
-        <textarea id="assinaturaGerada" rows="4" cols="50" readonly style="background-color: #f4f4f4;"></textarea>
+
+    <div id="resultado">
+        <p>✅ Documento assinado com sucesso!</p>
+        <label>ID da Assinatura</label>
+        <p class="id-destaque" id="sig-id"></p>
+        <label>Hash SHA-256</label>
+        <textarea id="sig-hash" rows="2" readonly></textarea>
+        <label>Assinatura RSA (hex)</label>
+        <textarea id="sig-hex" rows="4" readonly></textarea>
     </div>
 
-    <br><br>
-    <a href="/verify.html">Ir para a página de Verificação Pública</a>
-    <br><br>
-    <button onclick="sair()" style="color: red;">Sair</button>
+    <p><a href="/verify.html">→ Verificar uma assinatura</a></p>
 
-    <script>
-        const API_URL = 'http://localhost:3000/api';
+<script>
+const API = 'http://localhost:3000/api';
+const userId = localStorage.getItem('userId');
+if (!userId) location.href = '/';
+document.getElementById('username-display').textContent = localStorage.getItem('username');
 
-        if(!localStorage.getItem('userId')) window.location.href = '/';
+async function assinar() {
+    const text = document.getElementById('texto').value.trim();
+    if (!text) return alert('Digite um texto para assinar.');
+    const res  = await fetch(`${API}/sign`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId, text }) });
+    const data = await res.json();
+    if (res.ok) {
+        document.getElementById('sig-id').textContent      = data.signatureId;
+        document.getElementById('sig-hash').value          = data.hash;
+        document.getElementById('sig-hex').value           = data.signature;
+        document.getElementById('resultado').style.display = 'block';
+    } else {
+        alert(data.error);
+    }
+}
 
-        async function assinar() {
-            const texto = document.getElementById('texto').value;
-            const userId = localStorage.getItem('userId');
-
-            if(!texto) return alert("Digite um texto para assinar.");
-
-            const res = await fetch(`${API_URL}/sign`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, text: texto })
-            });
-            const data = await res.json();
-            
-            if(data.signature) {
-                document.getElementById('resultado').style.display = 'block';
-                document.getElementById('assinaturaGerada').value = data.signature;
-            }
-        }
-
-        function sair() {
-            localStorage.removeItem('userId');
-            window.location.href = '/';
-        }
-    </script>
+function logout() { localStorage.clear(); location.href = '/'; }
+</script>
 </body>
 </html>
