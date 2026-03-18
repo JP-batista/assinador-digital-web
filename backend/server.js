@@ -123,6 +123,38 @@ app.post('/api/verify', (req, res) => {
     });
 });
 
+// ─── LISTAR CHAVES PÚBLICAS ───────────────────────────────────────────────────
+app.get('/api/users/keys', (req, res) => {
+    db.all('SELECT id, username, created_at FROM users ORDER BY username ASC', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Erro ao buscar usuários.' });
+        res.json(rows || []);
+    });
+});
+
+// ─── DOWNLOAD CHAVE PÚBLICA ───────────────────────────────────────────────────
+app.get('/api/users/:id/download/public', (req, res) => {
+    db.get('SELECT username, public_key FROM users WHERE id = ?', [req.params.id], (err, user) => {
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+        res.setHeader('Content-Type', 'application/x-pem-file');
+        res.setHeader('Content-Disposition', `attachment; filename="${user.username}_public.pem"`);
+        res.send(user.public_key);
+    });
+});
+
+// ─── DOWNLOAD CHAVE PRIVADA (apenas o próprio usuário) ────────────────────────
+app.get('/api/users/:id/download/private', (req, res) => {
+    const { userId } = req.query;
+    if (!userId || String(userId) !== String(req.params.id))
+        return res.status(403).json({ error: 'Você só pode baixar sua própria chave privada.' });
+
+    db.get('SELECT username, private_key FROM users WHERE id = ?', [req.params.id], (err, user) => {
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+        res.setHeader('Content-Type', 'application/x-pem-file');
+        res.setHeader('Content-Disposition', `attachment; filename="${user.username}_private.pem"`);
+        res.send(user.private_key);
+    });
+});
+
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 async function start() {
     await db.init();

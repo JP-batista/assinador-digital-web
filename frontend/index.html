@@ -4,45 +4,293 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assinador Digital Web</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; max-width: 400px; margin: 80px auto; padding: 0 20px; }
-        h2 { margin-bottom: 24px; }
-        input { display: block; width: 100%; padding: 8px; margin-bottom: 12px; box-sizing: border-box; font-size: 15px; }
-        button { padding: 8px 20px; margin-right: 8px; font-size: 14px; cursor: pointer; }
-        #msg { margin-top: 14px; font-size: 14px; }
-        a { font-size: 13px; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(0,229,160,0.04) 0%, transparent 60%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--accent2);
+            border: 1px solid var(--accent);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon svg { width: 28px; height: 28px; color: var(--accent); }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+            font-family: var(--mono);
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--sans);
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--muted);
+            background: transparent;
+        }
+
+        .tab.active {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            font-family: var(--mono);
+        }
+
+        input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 15px;
+            color: var(--text);
+            font-family: var(--sans);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: var(--sans);
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.15s, transform 0.1s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.99); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .msg {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: var(--mono);
+            display: none;
+        }
+
+        .msg.ok  { background: rgba(0,229,160,0.1); border: 1px solid var(--accent2); color: var(--accent); }
+        .msg.err { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); color: var(--error); }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .verify-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .verify-link a { color: var(--accent); text-decoration: none; }
+        .verify-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <h2>Assinador Digital Web</h2>
-    <input type="text" id="user" placeholder="Usuário">
-    <input type="password" id="pass" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-    <button onclick="register()">Cadastrar</button>
-    <p id="msg"></p>
-    <p><a href="/verify.html">→ Verificação pública</a></p>
+<div class="container">
+    <div class="logo">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"/>
+            </svg>
+        </div>
+        <h1>Assinador Digital</h1>
+        <p class="subtitle">RSA-SHA256 · Web</p>
+    </div>
+
+    <div class="card">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Entrar</button>
+            <button class="tab" onclick="switchTab('register')">Cadastrar</button>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="panel active" id="panel-login">
+            <div class="form-group">
+                <label>Usuário</label>
+                <input type="text" id="login-user" placeholder="seu_usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button class="btn" onclick="login()">Entrar</button>
+            <div class="msg" id="login-msg"></div>
+        </div>
+
+        <!-- REGISTRO -->
+        <div class="panel" id="panel-register">
+            <div class="form-group">
+                <label>Usuário</label>
+                <input type="text" id="reg-user" placeholder="seu_usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="reg-pass" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <button class="btn" onclick="register()">Criar conta</button>
+            <div class="msg" id="reg-msg"></div>
+        </div>
+    </div>
+
+    <div class="verify-link">
+        <a href="/verify.html">→ Verificação pública de assinaturas</a>
+    </div>
+</div>
 
 <script>
 const API = 'http://localhost:3000/api';
-const msg = document.getElementById('msg');
 
-async function login() {
-    const res  = await fetch(`${API}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: user.value, password: pass.value }) });
-    const data = await res.json();
-    if (res.ok) {
-        localStorage.setItem('userId',   data.userId);
-        localStorage.setItem('username', data.username);
-        location.href = '/painel.html';
-    } else {
-        msg.textContent = data.error;
-    }
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
+    document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+    document.getElementById('panel-register').classList.toggle('active', tab === 'register');
+}
+
+function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
+    el.style.display = 'block';
 }
 
 async function register() {
-    const res  = await fetch(`${API}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: user.value, password: pass.value }) });
+    const username = document.getElementById('reg-user').value.trim();
+    const password = document.getElementById('reg-pass').value;
+    if (!username || !password) return showMsg('reg-msg', 'Preencha todos os campos.', 'err');
+
+    const btn = document.querySelector('#panel-register .btn');
+    btn.disabled = true; btn.textContent = 'Aguarde...';
+
+    const res  = await fetch(`${API}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password}) });
     const data = await res.json();
-    msg.textContent = data.message || data.error;
+    btn.disabled = false; btn.textContent = 'Criar conta';
+
+    if (res.ok) showMsg('reg-msg', '✓ Conta criada! Faça login.', 'ok');
+    else        showMsg('reg-msg', data.error, 'err');
 }
+
+async function login() {
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value;
+    if (!username || !password) return showMsg('login-msg', 'Preencha todos os campos.', 'err');
+
+    const btn = document.querySelector('#panel-login .btn');
+    btn.disabled = true; btn.textContent = 'Entrando...';
+
+    const res  = await fetch(`${API}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password}) });
+    const data = await res.json();
+    btn.disabled = false; btn.textContent = 'Entrar';
+
+    if (res.ok) {
+        localStorage.setItem('userId',   data.userId);
+        localStorage.setItem('username', data.username);
+        window.location.href = '/painel.html';
+    } else {
+        showMsg('login-msg', data.error, 'err');
+    }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') { document.querySelector('.panel.active .btn').click(); } });
 </script>
 </body>
 </html>

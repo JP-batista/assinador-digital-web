@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaves Públicas — Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --surface2: #1a1d24;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 80% 20%, rgba(0,229,160,0.04) 0%, transparent 60%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+            display: inline-block;
+        }
+
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-sub {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: var(--mono);
+            margin-bottom: 36px;
+        }
+
+        /* Search */
+        .search-wrap {
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text);
+            font-family: var(--mono);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-input::placeholder { color: var(--muted); }
+        .search-input:focus { border-color: var(--accent); }
+
+        /* User list */
+        #user-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .user-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            transition: border-color 0.15s;
+        }
+
+        .user-card:hover { border-color: #2e3340; }
+
+        .user-card.is-me { border-color: var(--accent2); }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-me {
+            background: rgba(0,229,160,0.12);
+            color: var(--accent);
+            border: 1px solid var(--accent2);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: var(--mono);
+            text-transform: uppercase;
+        }
+
+        .user-date {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .pubkey-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+
+        .pubkey-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: var(--mono);
+            margin-bottom: 8px;
+        }
+
+        .pubkey-value {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text);
+            white-space: pre;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 60px;
+            opacity: 0.7;
+            cursor: pointer;
+            transition: max-height 0.3s, opacity 0.15s;
+        }
+
+        .pubkey-value:hover { opacity: 1; }
+        .pubkey-value.expanded { max-height: 500px; }
+
+        .pubkey-toggle {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+            cursor: pointer;
+            margin-top: 6px;
+            user-select: none;
+            transition: color 0.15s;
+        }
+
+        .pubkey-toggle:hover { color: var(--accent); }
+
+        /* Download buttons */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: var(--mono);
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .btn-pub {
+            background: rgba(0,229,160,0.1);
+            color: var(--accent);
+            border-color: var(--accent2);
+        }
+
+        .btn-pub:hover {
+            background: rgba(0,229,160,0.18);
+        }
+
+        .btn-priv {
+            background: rgba(255,77,109,0.08);
+            color: var(--error);
+            border-color: rgba(255,77,109,0.25);
+        }
+
+        .btn-priv:hover {
+            background: rgba(255,77,109,0.15);
+        }
+
+        /* Empty / loading */
+        .state-msg {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <div class="header-right">
+        <span id="username-display" style="display:none"></span>
+        <a href="/painel.html" class="btn-ghost" id="link-painel" style="display:none">← Painel</a>
+        <a href="/" class="btn-ghost">Início</a>
+    </div>
+</header>
+
+<main>
+    <div class="page-title">Chaves Públicas</div>
+    <p class="page-sub">Repositório de chaves públicas RSA-2048 de todos os usuários cadastrados</p>
+
+    <div class="search-wrap">
+        <input
+            type="text"
+            class="search-input"
+            id="search"
+            placeholder="Buscar usuário..."
+            oninput="filtrar()"
+        >
+    </div>
+
+    <div id="user-list">
+        <div class="state-msg">Carregando...</div>
+    </div>
+</main>
+
+<script>
+const API = 'http://localhost:3000/api';
+const userId   = localStorage.getItem('userId');
+const username = localStorage.getItem('username');
+
+// Mostra info do usuário logado, se houver
+if (userId) {
+    document.getElementById('username-display').textContent = username;
+    document.getElementById('username-display').style.display = 'inline';
+    document.getElementById('link-painel').style.display = 'inline-block';
+}
+
+let allUsers = [];
+
+async function carregar() {
+    try {
+        const res = await fetch(`${API}/users/keys`);
+        allUsers = await res.json();
+        renderizar(allUsers);
+    } catch {
+        document.getElementById('user-list').innerHTML =
+            '<div class="state-msg">Erro ao carregar usuários.</div>';
+    }
+}
+
+function filtrar() {
+    const q = document.getElementById('search').value.toLowerCase().trim();
+    const filtered = q ? allUsers.filter(u => u.username.toLowerCase().includes(q)) : allUsers;
+    renderizar(filtered);
+}
+
+function renderizar(users) {
+    const list = document.getElementById('user-list');
+
+    if (!users.length) {
+        list.innerHTML = '<div class="state-msg">Nenhum usuário encontrado.</div>';
+        return;
+    }
+
+    list.innerHTML = users.map(u => {
+        const isMe = String(u.id) === String(userId);
+        const data = u.created_at
+            ? new Date(u.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' })
+            : '—';
+
+        const btnPrivado = isMe
+            ? `<a class="btn-download btn-priv" href="${API}/users/${u.id}/download/private?userId=${userId}" download>
+                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                   Baixar Chave Privada
+               </a>`
+            : '';
+
+        return `
+        <div class="user-card${isMe ? ' is-me' : ''}" data-username="${u.username.toLowerCase()}">
+            <div class="user-header">
+                <div class="user-name">
+                    ${u.username}
+                    ${isMe ? '<span class="badge-me">você</span>' : ''}
+                </div>
+                <div class="user-date">desde ${data}</div>
+            </div>
+
+            <div class="pubkey-box">
+                <div class="pubkey-label">Chave Pública (RSA-2048 · SPKI · PEM)</div>
+                <div class="pubkey-value" id="pk-${u.id}" onclick="expandir(${u.id})">Clique para carregar...</div>
+                <div class="pubkey-toggle" onclick="expandir(${u.id})" id="toggle-${u.id}">▼ expandir</div>
+            </div>
+
+            <div class="action-row">
+                <a class="btn-download btn-pub" href="${API}/users/${u.id}/download/public" download>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Baixar Chave Pública
+                </a>
+                ${btnPrivado}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Carrega as chaves públicas de forma lazy
+    users.forEach(u => carregarChavePublica(u.id));
+}
+
+const chavesCache = {};
+
+async function carregarChavePublica(id) {
+    if (chavesCache[id]) {
+        mostrarChave(id, chavesCache[id]);
+        return;
+    }
+    try {
+        const res  = await fetch(`${API}/users/${id}/download/public`);
+        const text = await res.text();
+        chavesCache[id] = text;
+        mostrarChave(id, text);
+    } catch {
+        const el = document.getElementById(`pk-${id}`);
+        if (el) el.textContent = '(erro ao carregar)';
+    }
+}
+
+function mostrarChave(id, pem) {
+    const el = document.getElementById(`pk-${id}`);
+    if (el) el.textContent = pem;
+}
+
+function expandir(id) {
+    const el     = document.getElementById(`pk-${id}`);
+    const toggle = document.getElementById(`toggle-${id}`);
+    if (!el) return;
+    const expanded = el.classList.toggle('expanded');
+    toggle.textContent = expanded ? '▲ recolher' : '▼ expandir';
+}
+
+carregar();
+</script>
+</body>
+</html>

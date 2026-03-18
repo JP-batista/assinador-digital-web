@@ -92,6 +92,19 @@ function get(sql, params, cb) {
     }
 }
 
+function all(sql, params, cb) {
+    try {
+        const stmt = db.prepare(sql);
+        stmt.bind(params);
+        const rows = [];
+        while (stmt.step()) rows.push(stmt.getAsObject());
+        stmt.free();
+        if (cb) cb(null, rows);
+    } catch (err) {
+        if (cb) cb(err, []);
+    }
+}
+
 function run(sql, params, cb) {
     try {
         db.run(sql, params || []);
@@ -102,4 +115,4 @@ function run(sql, params, cb) {
     }
 }
 
-module.exports = { init, prepare, get, run };
+module.exports = { init, prepare, get, all, run };

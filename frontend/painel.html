@@ -4,58 +4,365 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel — Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
-        textarea { width: 100%; padding: 8px; font-size: 14px; box-sizing: border-box; }
-        button { padding: 8px 20px; font-size: 14px; cursor: pointer; margin-top: 8px; }
-        #resultado { margin-top: 20px; padding: 14px; background: #f4f4f4; border: 1px solid #ccc; display: none; }
-        #resultado label { display: block; font-size: 12px; color: #555; margin-top: 10px; }
-        #resultado textarea { background: #fff; margin-top: 4px; }
-        .id-destaque { font-size: 22px; font-weight: bold; }
-        nav { margin-bottom: 16px; font-size: 13px; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --surface2: #1a1d24;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 80% 20%, rgba(0,229,160,0.04) 0%, transparent 60%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover { border-color: var(--error); color: var(--error); }
+
+        main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-sub {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: var(--mono);
+            margin-bottom: 36px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            font-family: var(--mono);
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 14px;
+            color: var(--text);
+            font-family: var(--mono);
+            resize: vertical;
+            min-height: 140px;
+            outline: none;
+            transition: border-color 0.15s;
+            line-height: 1.6;
+        }
+
+        textarea:focus { border-color: var(--accent); }
+
+        .char-count {
+            text-align: right;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-top: 6px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: var(--sans);
+            cursor: pointer;
+            margin-top: 20px;
+            transition: opacity 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.99); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        /* Resultado */
+        .result {
+            display: none;
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .badge-ok {
+            background: rgba(0,229,160,0.15);
+            color: var(--accent);
+            border: 1px solid var(--accent2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--mono);
+            text-transform: uppercase;
+        }
+
+        .result-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .result-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .result-item-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: var(--mono);
+            margin-bottom: 6px;
+        }
+
+        .result-item-value {
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--text);
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .result-item-value.highlight {
+            color: var(--accent);
+            font-size: 20px;
+            font-weight: 700;
+            font-family: var(--sans);
+        }
+
+        .copy-btn {
+            float: right;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .nav-verify {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--muted);
+        }
+
+        .nav-verify a { color: var(--accent); text-decoration: none; }
+        .nav-verify a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <nav>Usuário: <strong id="username-display"></strong> — <a href="#" onclick="logout()">Sair</a></nav>
-    <h2>Assinar Documento</h2>
-    <textarea id="texto" rows="6" placeholder="Digite o texto a assinar..."></textarea>
-    <br>
-    <button onclick="assinar()">Assinar Digitalmente</button>
 
-    <div id="resultado">
-        <p>✅ Documento assinado com sucesso!</p>
-        <label>ID da Assinatura</label>
-        <p class="id-destaque" id="sig-id"></p>
-        <label>Hash SHA-256</label>
-        <textarea id="sig-hash" rows="2" readonly></textarea>
-        <label>Assinatura RSA (hex)</label>
-        <textarea id="sig-hex" rows="4" readonly></textarea>
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <div class="user-info">
+        <span id="username-display">—</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<main>
+    <div class="page-title">Assinar Documento</div>
+    <p class="page-sub">O texto será assinado com sua chave privada RSA-2048 · SHA-256</p>
+
+    <div class="card">
+        <label for="texto">Texto a assinar</label>
+        <textarea id="texto" placeholder="Digite ou cole o conteúdo do documento aqui..." oninput="updateCount()"></textarea>
+        <div class="char-count"><span id="char-count">0</span> caracteres</div>
+
+        <button class="btn" id="btn-assinar" onclick="assinar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Assinar Digitalmente
+        </button>
+
+        <!-- Resultado -->
+        <div class="result" id="result">
+            <div class="result-header">
+                <span class="badge-ok">✓ Assinado</span>
+                <span style="font-size:13px; color:var(--muted); font-family:var(--mono)">Guarde o ID para verificação</span>
+            </div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-item-label">ID da Assinatura</div>
+                    <div class="result-item-value highlight" id="sig-id">—</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">
+                        SHA-256 do Texto
+                    </div>
+                    <div class="result-item-value" id="sig-hash">—</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">
+                        Assinatura RSA (hex)
+                        <button class="copy-btn" onclick="copyHex()">copiar</button>
+                    </div>
+                    <div class="result-item-value" id="sig-hex" style="max-height:80px;overflow:hidden;text-overflow:ellipsis;">—</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <p><a href="/verify.html">→ Verificar uma assinatura</a></p>
+    <div class="nav-verify">
+        <a href="/verify.html">→ Verificar uma assinatura existente</a>
+        &nbsp;·&nbsp;
+        <a href="/chaves.html">→ Ver chaves públicas</a>
+    </div>
+</main>
 
 <script>
 const API = 'http://localhost:3000/api';
+
 const userId = localStorage.getItem('userId');
-if (!userId) location.href = '/';
-document.getElementById('username-display').textContent = localStorage.getItem('username');
+const username = localStorage.getItem('username');
+
+if (!userId) window.location.href = '/';
+document.getElementById('username-display').textContent = username || '—';
+
+function updateCount() {
+    document.getElementById('char-count').textContent = document.getElementById('texto').value.length;
+}
 
 async function assinar() {
     const text = document.getElementById('texto').value.trim();
-    if (!text) return alert('Digite um texto para assinar.');
-    const res  = await fetch(`${API}/sign`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId, text }) });
+    if (!text) return;
+
+    const btn = document.getElementById('btn-assinar');
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Assinando...`;
+
+    const res  = await fetch(`${API}/sign`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({userId, text}) });
     const data = await res.json();
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Assinar Digitalmente`;
+
     if (res.ok) {
-        document.getElementById('sig-id').textContent      = data.signatureId;
-        document.getElementById('sig-hash').value          = data.hash;
-        document.getElementById('sig-hex').value           = data.signature;
-        document.getElementById('resultado').style.display = 'block';
-    } else {
-        alert(data.error);
+        document.getElementById('sig-id').textContent   = data.signatureId;
+        document.getElementById('sig-hash').textContent = data.hash;
+        document.getElementById('sig-hex').textContent  = data.signature;
+        document.getElementById('result').style.display = 'block';
     }
 }
 
-function logout() { localStorage.clear(); location.href = '/'; }
+function copyHex() {
+    const hex = document.getElementById('sig-hex').textContent;
+    navigator.clipboard.writeText(hex);
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'copiado!';
+    setTimeout(() => btn.textContent = 'copiar', 2000);
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/';
+}
 </script>
 </body>
 </html>

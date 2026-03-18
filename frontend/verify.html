@@ -4,80 +4,274 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificação Pública — Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
-        input, textarea { width: 100%; padding: 8px; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
-        button { padding: 8px 20px; font-size: 14px; cursor: pointer; }
-        hr { margin: 28px 0; }
-        #resultado { margin-top: 20px; padding: 14px; border: 1px solid #ccc; display: none; }
-        .valida   { color: green; font-weight: bold; }
-        .invalida { color: red;   font-weight: bold; }
-        table { border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        td { padding: 5px 12px 5px 0; vertical-align: top; }
-        td:first-child { color: #555; white-space: nowrap; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --error-bg: rgba(255,77,109,0.08);
+            --error-border: rgba(255,77,109,0.25);
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 50% 0%, rgba(0,229,160,0.04) 0%, transparent 55%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:15px; }
+        .brand-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+
+        .nav-link { font-size:12px; font-family:var(--mono); color:var(--muted); text-decoration:none; }
+        .nav-link:hover { color:var(--accent); }
+
+        main { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+
+        .page-title { font-size:28px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px; }
+        .page-sub { color:var(--muted); font-size:13px; font-family:var(--mono); margin-bottom:36px; }
+
+        /* Tabs */
+        .tabs { display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:28px; }
+        .tab { flex:1; padding:9px; text-align:center; font-size:13px; font-weight:700; border:none; border-radius:7px; cursor:pointer; transition:all 0.15s; color:var(--muted); background:transparent; font-family:var(--sans); }
+        .tab.active { background:var(--bg); color:var(--text); border:1px solid var(--border); }
+
+        .panel { display:none; }
+        .panel.active { display:block; }
+
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; }
+
+        label { display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; font-family:var(--mono); }
+
+        input, textarea {
+            width:100%;
+            background:var(--bg);
+            border:1px solid var(--border);
+            border-radius:8px;
+            padding:12px 14px;
+            font-size:14px;
+            color:var(--text);
+            font-family:var(--mono);
+            outline:none;
+            transition:border-color 0.15s;
+        }
+
+        input:focus, textarea:focus { border-color:var(--accent); }
+        textarea { resize:vertical; min-height:110px; line-height:1.6; }
+
+        .form-group { margin-bottom:16px; }
+
+        .btn {
+            width:100%;
+            padding:13px;
+            background:var(--accent);
+            color:#000;
+            border:none;
+            border-radius:9px;
+            font-size:14px;
+            font-weight:800;
+            font-family:var(--sans);
+            cursor:pointer;
+            margin-top:8px;
+            transition:opacity 0.15s, transform 0.1s;
+        }
+
+        .btn:hover { opacity:0.9; }
+        .btn:active { transform:scale(0.99); }
+        .btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+
+        /* Result */
+        .result { display:none; margin-top:28px; }
+
+        .status-valid {
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:20px 22px;
+            background:rgba(0,229,160,0.08);
+            border:1px solid var(--accent2);
+            border-radius:12px;
+            margin-bottom:16px;
+        }
+
+        .status-invalid {
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:20px 22px;
+            background:var(--error-bg);
+            border:1px solid var(--error-border);
+            border-radius:12px;
+            margin-bottom:16px;
+        }
+
+        .status-icon { font-size:24px; flex-shrink:0; }
+        .status-label { font-size:18px; font-weight:800; }
+        .status-reason { font-size:12px; font-family:var(--mono); color:var(--muted); margin-top:3px; }
+
+        .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+        .meta-item { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+        .meta-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-family:var(--mono); margin-bottom:5px; }
+        .meta-value { font-size:14px; font-family:var(--mono); color:var(--text); }
+
+        @media (max-width:500px) { .meta-grid { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
-    <h2>Verificação Pública de Assinatura</h2>
 
-    <h3>Verificar por ID</h3>
-    <input type="number" id="sig-id" placeholder="ID da assinatura (ex: 1)" min="1">
-    <button onclick="verifyById()">Verificar</button>
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <a class="nav-link" href="/">← Voltar ao início</a>
+</header>
 
-    <hr>
+<main>
+    <div class="page-title">Verificação Pública</div>
+    <p class="page-sub">Qualquer pessoa pode verificar a autenticidade de uma assinatura</p>
 
-    <h3>Verificar por texto + assinatura</h3>
-    <label>Texto original:</label>
-    <textarea id="m-text" rows="5" placeholder="Cole o texto original aqui..."></textarea>
-    <label>Assinatura (hex):</label>
-    <textarea id="m-sig" rows="3" placeholder="Cole a assinatura hexadecimal..."></textarea>
-    <button onclick="verifyManual()">Verificar</button>
-
-    <div id="resultado">
-        <p id="status-txt"></p>
-        <p id="motivo" style="font-size:13px; color:#555;"></p>
-        <table id="meta" style="display:none">
-            <tr><td>Signatário:</td> <td id="m-signatory"></td></tr>
-            <tr><td>Algoritmo:</td>  <td id="m-algorithm"></td></tr>
-            <tr><td>ID:</td>         <td id="m-id"></td></tr>
-            <tr><td>Data/Hora:</td>  <td id="m-date"></td></tr>
-        </table>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('id')">Verificar por ID</button>
+        <button class="tab" onclick="switchTab('manual')">Colar texto + assinatura</button>
     </div>
 
-    <p><a href="/">← Voltar ao início</a></p>
+    <!-- Por ID -->
+    <div class="panel active" id="panel-id">
+        <div class="card">
+            <div class="form-group">
+                <label>ID da Assinatura</label>
+                <input type="number" id="sig-id-input" placeholder="Ex: 1" min="1">
+            </div>
+            <button class="btn" onclick="verifyById()">Verificar</button>
+        </div>
+    </div>
+
+    <!-- Manual -->
+    <div class="panel" id="panel-manual">
+        <div class="card">
+            <div class="form-group">
+                <label>Texto Original</label>
+                <textarea id="m-text" placeholder="Cole o conteúdo original do documento..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Assinatura (hex)</label>
+                <textarea id="m-sig" rows="3" placeholder="Cole a assinatura hexadecimal..."></textarea>
+            </div>
+            <button class="btn" onclick="verifyManual()">Verificar</button>
+        </div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="result" id="result">
+        <div id="status-box"></div>
+        <div class="meta-grid" id="meta-grid" style="display:none"></div>
+    </div>
+</main>
 
 <script>
 const API = 'http://localhost:3000/api';
 
-function mostrarResultado(data) {
-    const valida = data.status === 'VÁLIDA';
-    document.getElementById('status-txt').innerHTML = `Status: <span class="${valida ? 'valida' : 'invalida'}">${data.status}</span>`;
-    document.getElementById('motivo').textContent   = valida ? '' : (data.reason || 'A assinatura não confere com o texto.');
-    document.getElementById('meta').style.display   = valida ? '' : 'none';
-    if (valida) {
-        document.getElementById('m-signatory').textContent = data.signatory;
-        document.getElementById('m-algorithm').textContent = data.algorithm;
-        document.getElementById('m-id').textContent        = data.signatureId;
-        document.getElementById('m-date').textContent      = new Date(data.date).toLocaleString('pt-BR');
+function switchTab(tab) {
+    const tabs = document.querySelectorAll('.tab');
+    tabs[0].classList.toggle('active', tab === 'id');
+    tabs[1].classList.toggle('active', tab === 'manual');
+    document.getElementById('panel-id').classList.toggle('active', tab === 'id');
+    document.getElementById('panel-manual').classList.toggle('active', tab === 'manual');
+    document.getElementById('result').style.display = 'none';
+}
+
+function renderResult(data) {
+    const resultEl = document.getElementById('result');
+    const statusBox = document.getElementById('status-box');
+    const metaGrid = document.getElementById('meta-grid');
+
+    resultEl.style.display = 'block';
+
+    if (data.status === 'VÁLIDA') {
+        statusBox.innerHTML = `
+            <div class="status-valid">
+                <div class="status-icon">✅</div>
+                <div>
+                    <div class="status-label" style="color:var(--accent)">Assinatura VÁLIDA</div>
+                    <div class="status-reason">A autenticidade do documento foi confirmada</div>
+                </div>
+            </div>`;
+        metaGrid.style.display = 'grid';
+        metaGrid.innerHTML = `
+            <div class="meta-item">
+                <div class="meta-label">Signatário</div>
+                <div class="meta-value">${data.signatory}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Algoritmo</div>
+                <div class="meta-value">${data.algorithm}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">ID da Assinatura</div>
+                <div class="meta-value">#${data.signatureId}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Data / Hora</div>
+                <div class="meta-value">${new Date(data.date).toLocaleString('pt-BR')}</div>
+            </div>`;
+    } else {
+        statusBox.innerHTML = `
+            <div class="status-invalid">
+                <div class="status-icon">❌</div>
+                <div>
+                    <div class="status-label" style="color:var(--error)">Assinatura INVÁLIDA</div>
+                    <div class="status-reason">${data.reason || 'A assinatura não confere com o texto fornecido.'}</div>
+                </div>
+            </div>`;
+        metaGrid.style.display = 'none';
     }
-    document.getElementById('resultado').style.display = 'block';
+
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function verifyById() {
-    const id = document.getElementById('sig-id').value.trim();
+    const id = document.getElementById('sig-id-input').value.trim();
     if (!id) return;
+    const btn = document.querySelector('#panel-id .btn');
+    btn.disabled = true; btn.textContent = 'Verificando...';
     const res  = await fetch(`${API}/verify/${id}`);
     const data = await res.json();
-    mostrarResultado(data);
+    btn.disabled = false; btn.textContent = 'Verificar';
+    renderResult(data);
 }
 
 async function verifyManual() {
     const text      = document.getElementById('m-text').value.trim();
     const signature = document.getElementById('m-sig').value.trim();
-    if (!text || !signature) return alert('Preencha o texto e a assinatura.');
-    const res  = await fetch(`${API}/verify`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, signature }) });
+    if (!text || !signature) return;
+    const btn = document.querySelector('#panel-manual .btn');
+    btn.disabled = true; btn.textContent = 'Verificando...';
+    const res  = await fetch(`${API}/verify`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text, signature}) });
     const data = await res.json();
-    mostrarResultado(data);
+    btn.disabled = false; btn.textContent = 'Verificar';
+    renderResult(data);
 }
 </script>
 </body>
