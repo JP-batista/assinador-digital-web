@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Assinador Digital - Início</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Cadastro / Login</h2>
+    <input type="text" id="user" placeholder="Usuário"><br><br>
+    <input type="password" id="pass" placeholder="Senha"><br><br>
+    
+    <button onclick="register()">Cadastrar</button>
+    <button onclick="login()">Entrar</button>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        async function register() {
+            const res = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('user').value,
+                    password: document.getElementById('pass').value
+                })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+        }
+
+        async function login() {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('user').value,
+                    password: document.getElementById('pass').value
+                })
+            });
+            const data = await res.json();
+            if(data.userId) {
+                localStorage.setItem('userId', data.userId);
+                window.location.href = '/painel.html'; 
+            } else {
+                alert(data.error);
+            }
+        }
+    </script>
+</body>
+</html>

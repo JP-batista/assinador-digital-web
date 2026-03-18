@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel - Assinar Documento</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Assinar um Texto</h2>
+    <p>Digite o texto que deseja assinar:</p>
+    
+    <textarea id="texto" rows="5" cols="50" placeholder="Digite aqui..."></textarea><br><br>
+    <button onclick="assinar()">Assinar Digitalmente</button>
+    
+    <div id="resultado" style="display: none; margin-top: 20px;">
+        <h3 style="color: green;">Documento Assinado!</h3>
+        <p>Copie a assinatura abaixo:</p>
+        <textarea id="assinaturaGerada" rows="4" cols="50" readonly style="background-color: #f4f4f4;"></textarea>
+    </div>
+
+    <br><br>
+    <a href="/verify.html">Ir para a página de Verificação Pública</a>
+    <br><br>
+    <button onclick="sair()" style="color: red;">Sair</button>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        if(!localStorage.getItem('userId')) window.location.href = '/';
+
+        async function assinar() {
+            const texto = document.getElementById('texto').value;
+            const userId = localStorage.getItem('userId');
+
+            if(!texto) return alert("Digite um texto para assinar.");
+
+            const res = await fetch(`${API_URL}/sign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, text: texto })
+            });
+            const data = await res.json();
+            
+            if(data.signature) {
+                document.getElementById('resultado').style.display = 'block';
+                document.getElementById('assinaturaGerada').value = data.signature;
+            }
+        }
+
+        function sair() {
+            localStorage.removeItem('userId');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

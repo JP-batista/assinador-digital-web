@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificação Pública</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Verificador de Assinaturas</h2>
+    <p>Cole o texto original e a assinatura digital para verificar a autenticidade.</p>
+    
+    <b>Texto Original:</b><br>
+    <textarea id="texto" rows="5" cols="50" placeholder="Cole o texto original aqui..."></textarea><br><br>
+
+    <b>Assinatura (Hash Hexadecimal):</b><br>
+    <textarea id="assinatura" rows="4" cols="50" placeholder="Cole a assinatura aqui..."></textarea><br><br>
+
+    <button onclick="verificar()">Verificar Autenticidade</button>
+    <br><br>
+    <a href="/">Voltar ao Início</a>
+
+    <div id="info" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none;">
+        <h3 id="status"></h3>
+        <p id="motivoErro" style="color: red; display: none;"></p>
+        <div id="detalhes">
+            <p><b>Signatário:</b> <span id="signatario"></span></p>
+            <p><b>Algoritmo:</b> <span id="algoritmo"></span></p>
+            <p><b>Data/Hora:</b> <span id="data"></span></p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        async function verificar() {
+            const text = document.getElementById('texto').value;
+            const signature = document.getElementById('assinatura').value;
+
+            if (!text || !signature) {
+                alert("Por favor, preencha o texto e a assinatura.");
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, signature })
+            });
+            const data = await res.json();
+
+            document.getElementById('info').style.display = 'block';
+            const statusEl = document.getElementById('status');
+            const motivoErroEl = document.getElementById('motivoErro');
+            const detalhesEl = document.getElementById('detalhes');
+            
+            statusEl.innerText = `Status: ${data.status}`;
+            
+            if (data.status === 'VÁLIDA') {
+                statusEl.style.color = 'green';
+                motivoErroEl.style.display = 'none';
+                detalhesEl.style.display = 'block';
+                
+                document.getElementById('signatario').innerText = data.signatory;
+                document.getElementById('algoritmo').innerText = data.algorithm;
+                document.getElementById('data').innerText = new Date(data.date).toLocaleString();
+            } else {
+                statusEl.style.color = 'red';
+                detalhesEl.style.display = 'none';
+                motivoErroEl.style.display = 'block';
+                motivoErroEl.innerText = data.reason || "A assinatura não confere com o texto fornecido.";
+            }
+        }
+    </script>
+</body>
+</html>
