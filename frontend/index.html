@@ -2,49 +2,47 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Assinador Digital - Início</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinador Digital Web</title>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 80px auto; padding: 0 20px; }
+        h2 { margin-bottom: 24px; }
+        input { display: block; width: 100%; padding: 8px; margin-bottom: 12px; box-sizing: border-box; font-size: 15px; }
+        button { padding: 8px 20px; margin-right: 8px; font-size: 14px; cursor: pointer; }
+        #msg { margin-top: 14px; font-size: 14px; }
+        a { font-size: 13px; }
+    </style>
 </head>
-<body style="font-family: Arial; padding: 20px;">
-    <h2>Cadastro / Login</h2>
-    <input type="text" id="user" placeholder="Usuário"><br><br>
-    <input type="password" id="pass" placeholder="Senha"><br><br>
-    
-    <button onclick="register()">Cadastrar</button>
+<body>
+    <h2>Assinador Digital Web</h2>
+    <input type="text" id="user" placeholder="Usuário">
+    <input type="password" id="pass" placeholder="Senha">
     <button onclick="login()">Entrar</button>
+    <button onclick="register()">Cadastrar</button>
+    <p id="msg"></p>
+    <p><a href="/verify.html">→ Verificação pública</a></p>
 
-    <script>
-        const API_URL = 'http://localhost:3000/api';
+<script>
+const API = 'http://localhost:3000/api';
+const msg = document.getElementById('msg');
 
-        async function register() {
-            const res = await fetch(`${API_URL}/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: document.getElementById('user').value,
-                    password: document.getElementById('pass').value
-                })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-        }
+async function login() {
+    const res  = await fetch(`${API}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: user.value, password: pass.value }) });
+    const data = await res.json();
+    if (res.ok) {
+        localStorage.setItem('userId',   data.userId);
+        localStorage.setItem('username', data.username);
+        location.href = '/painel.html';
+    } else {
+        msg.textContent = data.error;
+    }
+}
 
-        async function login() {
-            const res = await fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: document.getElementById('user').value,
-                    password: document.getElementById('pass').value
-                })
-            });
-            const data = await res.json();
-            if(data.userId) {
-                localStorage.setItem('userId', data.userId);
-                window.location.href = '/painel.html'; 
-            } else {
-                alert(data.error);
-            }
-        }
-    </script>
+async function register() {
+    const res  = await fetch(`${API}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: user.value, password: pass.value }) });
+    const data = await res.json();
+    msg.textContent = data.message || data.error;
+}
+</script>
 </body>
 </html>

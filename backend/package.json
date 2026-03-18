@@ -1,20 +1,20 @@
 {
   "name": "assinador-digital-web",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "Assinador Digital Web — projeto acadêmico ULBRA",
+  "main": "server.js",
   "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --runInBand --forceExit"
+  },
   "dependencies": {
-    "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^6.0.1"
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
   }
 }

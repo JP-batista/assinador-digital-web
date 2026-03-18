@@ -2,73 +2,83 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Verificação Pública</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação Pública — Assinador Digital</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        input, textarea { width: 100%; padding: 8px; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
+        button { padding: 8px 20px; font-size: 14px; cursor: pointer; }
+        hr { margin: 28px 0; }
+        #resultado { margin-top: 20px; padding: 14px; border: 1px solid #ccc; display: none; }
+        .valida   { color: green; font-weight: bold; }
+        .invalida { color: red;   font-weight: bold; }
+        table { border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        td { padding: 5px 12px 5px 0; vertical-align: top; }
+        td:first-child { color: #555; white-space: nowrap; }
+    </style>
 </head>
-<body style="font-family: Arial; padding: 20px;">
-    <h2>Verificador de Assinaturas</h2>
-    <p>Cole o texto original e a assinatura digital para verificar a autenticidade.</p>
-    
-    <b>Texto Original:</b><br>
-    <textarea id="texto" rows="5" cols="50" placeholder="Cole o texto original aqui..."></textarea><br><br>
+<body>
+    <h2>Verificação Pública de Assinatura</h2>
 
-    <b>Assinatura (Hash Hexadecimal):</b><br>
-    <textarea id="assinatura" rows="4" cols="50" placeholder="Cole a assinatura aqui..."></textarea><br><br>
+    <h3>Verificar por ID</h3>
+    <input type="number" id="sig-id" placeholder="ID da assinatura (ex: 1)" min="1">
+    <button onclick="verifyById()">Verificar</button>
 
-    <button onclick="verificar()">Verificar Autenticidade</button>
-    <br><br>
-    <a href="/">Voltar ao Início</a>
+    <hr>
 
-    <div id="info" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none;">
-        <h3 id="status"></h3>
-        <p id="motivoErro" style="color: red; display: none;"></p>
-        <div id="detalhes">
-            <p><b>Signatário:</b> <span id="signatario"></span></p>
-            <p><b>Algoritmo:</b> <span id="algoritmo"></span></p>
-            <p><b>Data/Hora:</b> <span id="data"></span></p>
-        </div>
+    <h3>Verificar por texto + assinatura</h3>
+    <label>Texto original:</label>
+    <textarea id="m-text" rows="5" placeholder="Cole o texto original aqui..."></textarea>
+    <label>Assinatura (hex):</label>
+    <textarea id="m-sig" rows="3" placeholder="Cole a assinatura hexadecimal..."></textarea>
+    <button onclick="verifyManual()">Verificar</button>
+
+    <div id="resultado">
+        <p id="status-txt"></p>
+        <p id="motivo" style="font-size:13px; color:#555;"></p>
+        <table id="meta" style="display:none">
+            <tr><td>Signatário:</td> <td id="m-signatory"></td></tr>
+            <tr><td>Algoritmo:</td>  <td id="m-algorithm"></td></tr>
+            <tr><td>ID:</td>         <td id="m-id"></td></tr>
+            <tr><td>Data/Hora:</td>  <td id="m-date"></td></tr>
+        </table>
     </div>
 
-    <script>
-        const API_URL = 'http://localhost:3000/api';
+    <p><a href="/">← Voltar ao início</a></p>
 
-        async function verificar() {
-            const text = document.getElementById('texto').value;
-            const signature = document.getElementById('assinatura').value;
+<script>
+const API = 'http://localhost:3000/api';
 
-            if (!text || !signature) {
-                alert("Por favor, preencha o texto e a assinatura.");
-                return;
-            }
+function mostrarResultado(data) {
+    const valida = data.status === 'VÁLIDA';
+    document.getElementById('status-txt').innerHTML = `Status: <span class="${valida ? 'valida' : 'invalida'}">${data.status}</span>`;
+    document.getElementById('motivo').textContent   = valida ? '' : (data.reason || 'A assinatura não confere com o texto.');
+    document.getElementById('meta').style.display   = valida ? '' : 'none';
+    if (valida) {
+        document.getElementById('m-signatory').textContent = data.signatory;
+        document.getElementById('m-algorithm').textContent = data.algorithm;
+        document.getElementById('m-id').textContent        = data.signatureId;
+        document.getElementById('m-date').textContent      = new Date(data.date).toLocaleString('pt-BR');
+    }
+    document.getElementById('resultado').style.display = 'block';
+}
 
-            const res = await fetch(`${API_URL}/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, signature })
-            });
-            const data = await res.json();
+async function verifyById() {
+    const id = document.getElementById('sig-id').value.trim();
+    if (!id) return;
+    const res  = await fetch(`${API}/verify/${id}`);
+    const data = await res.json();
+    mostrarResultado(data);
+}
 
-            document.getElementById('info').style.display = 'block';
-            const statusEl = document.getElementById('status');
-            const motivoErroEl = document.getElementById('motivoErro');
-            const detalhesEl = document.getElementById('detalhes');
-            
-            statusEl.innerText = `Status: ${data.status}`;
-            
-            if (data.status === 'VÁLIDA') {
-                statusEl.style.color = 'green';
-                motivoErroEl.style.display = 'none';
-                detalhesEl.style.display = 'block';
-                
-                document.getElementById('signatario').innerText = data.signatory;
-                document.getElementById('algoritmo').innerText = data.algorithm;
-                document.getElementById('data').innerText = new Date(data.date).toLocaleString();
-            } else {
-                statusEl.style.color = 'red';
-                detalhesEl.style.display = 'none';
-                motivoErroEl.style.display = 'block';
-                motivoErroEl.innerText = data.reason || "A assinatura não confere com o texto fornecido.";
-            }
-        }
-    </script>
+async function verifyManual() {
+    const text      = document.getElementById('m-text').value.trim();
+    const signature = document.getElementById('m-sig').value.trim();
+    if (!text || !signature) return alert('Preencha o texto e a assinatura.');
+    const res  = await fetch(`${API}/verify`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, signature }) });
+    const data = await res.json();
+    mostrarResultado(data);
+}
+</script>
 </body>
 </html>
