@@ -9,6 +9,70 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+function buildSignedMessageFile({ signatureId, userId, username, text, hash, signature, signedAt, mode }) {
+    return {
+        filename: `assinatura-${signatureId}.adsig.json`,
+        payload: {
+            version: 1,
+            mode,
+            algorithm: 'RSA-SHA256',
+            signatureId,
+            signerUserId: userId,
+            signerUsername: username,
+            signedAt,
+            message: text,
+            hash,
+            signature,
+        },
+    };
+}
+
+function buildPublicKeyMessageFile({ senderUserId, senderUsername, recipientUserId, recipientUsername, encryptedMessage, signedAt }) {
+    return {
+        filename: `mensagem-publica-${recipientUsername}-${Date.now()}.adsig.json`,
+        payload: {
+            version: 1,
+            mode: 'public_key',
+            algorithm: 'RSA-OAEP-SHA256',
+            senderUserId,
+            senderUsername,
+            recipientUserId,
+            recipientUsername,
+            signedAt,
+            encryptedMessage,
+        },
+    };
+}
+
+function verifyPrivateKeyFile(payload, publicKeyPem) {
+    const hash = crypto.createHash('sha256').update(payload.message).digest('hex');
+
+    if (hash !== payload.hash) {
+        return { ok: false, error: 'O hash do arquivo não confere com a mensagem.' };
+    }
+
+    const verify = crypto.createVerify('SHA256');
+    verify.update(payload.message);
+    const isValid = verify.verify(publicKeyPem, payload.signature, 'hex');
+
+    if (!isValid) {
+        return { ok: false, error: 'A assinatura não confere com a chave pública informada.' };
+    }
+
+    return {
+        ok: true,
+        data: {
+            mode: payload.mode,
+            algorithm: payload.algorithm,
+            message: payload.message,
+            signatureId: payload.signatureId,
+            signerUsername: payload.signerUsername,
+            signedAt: payload.signedAt,
+            status: 'VÁLIDA',
+        },
+    };
+}
+
 // ─── CADASTRO ────────────────────────────────────────────────────────────────
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
@@ -44,7 +108,7 @@ app.post('/api/sign', (req, res) => {
     if (!userId || !text)
         return res.status(400).json({ error: 'userId e text são obrigatórios.' });
 
-    db.get('SELECT private_key FROM users WHERE id = ?', [userId], (err, user) => {
+    db.get('SELECT username, private_key FROM users WHERE id = ?', [userId], (err, user) => {
         if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
         const hash = crypto.createHash('sha256').update(text).digest('hex');
@@ -56,8 +120,143 @@ app.post('/api/sign', (req, res) => {
         db.prepare('INSERT INTO signatures (user_id, original_text, text_hash, signature_hex) VALUES (?, ?, ?, ?)')
           .run([userId, text, hash, signature], function(err) {
               if (err) return res.status(500).json({ error: 'Erro ao salvar assinatura.' });
-              res.json({ message: 'Documento assinado com sucesso!', signatureId: this.lastID, hash, signature });
+              const signedFile = buildSignedMessageFile({
+                  signatureId: this.lastID,
+                  userId,
+                  username: user.username,
+                  text,
+                  hash,
+                  signature,
+                  signedAt: new Date().toISOString(),
+                  mode: 'private_key',
+              });
+
+              res.json({
+                  message: 'Documento assinado com sucesso!',
+                  signatureId: this.lastID,
+                  hash,
+                  signature,
+                  signedFile,
+              });
           });
+    });
+});
+
+app.post('/api/sign/public', (req, res) => {
+    const { senderUserId, recipientUserId, text } = req.body;
+    if (!senderUserId || !recipientUserId || !text)
+        return res.status(400).json({ error: 'senderUserId, recipientUserId e text sÃ£o obrigatÃ³rios.' });
+
+    if (String(senderUserId) === String(recipientUserId))
+        return res.status(400).json({ error: 'Escolha outra pessoa para usar a chave pÃºblica.' });
+
+    db.get('SELECT id, username FROM users WHERE id = ?', [senderUserId], (err, sender) => {
+        if (!sender) return res.status(404).json({ error: 'UsuÃ¡rio remetente nÃ£o encontrado.' });
+
+        db.get('SELECT id, username, public_key FROM users WHERE id = ?', [recipientUserId], (err2, recipient) => {
+            if (!recipient) return res.status(404).json({ error: 'UsuÃ¡rio destinatÃ¡rio nÃ£o encontrado.' });
+
+            const encryptedMessage = crypto.publicEncrypt(
+                {
+                    key: recipient.public_key,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                    oaepHash: 'sha256',
+                },
+                Buffer.from(text, 'utf8')
+            ).toString('base64');
+
+            const signedFile = buildPublicKeyMessageFile({
+                senderUserId: sender.id,
+                senderUsername: sender.username,
+                recipientUserId: recipient.id,
+                recipientUsername: recipient.username,
+                encryptedMessage,
+                signedAt: new Date().toISOString(),
+            });
+
+            res.json({
+                message: 'Arquivo gerado com a chave pÃºblica do destinatÃ¡rio.',
+                recipient: {
+                    id: recipient.id,
+                    username: recipient.username,
+                },
+                signedFile,
+            });
+        });
+    });
+});
+
+app.post('/api/decode/private/self', (req, res) => {
+    const { userId, filePayload } = req.body;
+    if (!userId || !filePayload)
+        return res.status(400).json({ error: 'userId e filePayload são obrigatórios.' });
+
+    if (filePayload.mode !== 'private_key')
+        return res.status(400).json({ error: 'O arquivo enviado não é do tipo private_key.' });
+
+    if (String(filePayload.signerUserId) !== String(userId))
+        return res.status(403).json({ error: 'Esse arquivo não pertence à conta logada.' });
+
+    db.get('SELECT public_key FROM users WHERE id = ?', [userId], (err, user) => {
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        const decoded = verifyPrivateKeyFile(filePayload, user.public_key);
+        if (!decoded.ok) return res.status(400).json({ error: decoded.error });
+
+        res.json(decoded.data);
+    });
+});
+
+app.post('/api/decode/private/public-key', (req, res) => {
+    const { filePayload, publicKey } = req.body;
+    if (!filePayload || !publicKey)
+        return res.status(400).json({ error: 'filePayload e publicKey são obrigatórios.' });
+
+    if (filePayload.mode !== 'private_key')
+        return res.status(400).json({ error: 'O arquivo enviado não é do tipo private_key.' });
+
+    const decoded = verifyPrivateKeyFile(filePayload, publicKey);
+    if (!decoded.ok) return res.status(400).json({ error: decoded.error });
+
+    res.json(decoded.data);
+});
+
+app.post('/api/decode/public', (req, res) => {
+    const { userId, filePayload } = req.body;
+    if (!userId || !filePayload)
+        return res.status(400).json({ error: 'userId e filePayload são obrigatórios.' });
+
+    if (filePayload.mode !== 'public_key')
+        return res.status(400).json({ error: 'O arquivo enviado não é do tipo public_key.' });
+
+    if (String(filePayload.recipientUserId) !== String(userId))
+        return res.status(403).json({ error: 'Esse arquivo foi gerado para outro usuário.' });
+
+    db.get('SELECT private_key FROM users WHERE id = ?', [userId], (err, user) => {
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        try {
+            const message = crypto.privateDecrypt(
+                {
+                    key: user.private_key,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                    oaepHash: 'sha256',
+                },
+                Buffer.from(filePayload.encryptedMessage, 'base64')
+            ).toString('utf8');
+
+            res.json({
+                mode: filePayload.mode,
+                algorithm: filePayload.algorithm,
+                message,
+                senderUsername: filePayload.senderUsername,
+                recipientUsername: filePayload.recipientUsername,
+                signedAt: filePayload.signedAt,
+                status: 'DECODIFICADA',
+            });
+        } catch {
+            res.status(400).json({ error: 'Não foi possível decodificar o arquivo com a chave privada da conta.' });
+        }
     });
 });
 

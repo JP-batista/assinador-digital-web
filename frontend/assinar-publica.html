@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinar com Chave Publica - Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --surface2: #1a1d24;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 20% 20%, rgba(0,229,160,0.06) 0%, transparent 55%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .btn-ghost,
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-ghost:hover,
+        .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .page-sub {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            font-family: var(--mono);
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 28px;
+        }
+
+        .helper {
+            margin-bottom: 20px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(0,229,160,0.08);
+            border: 1px solid var(--accent2);
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .helper strong {
+            color: var(--accent);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            font-family: var(--mono);
+        }
+
+        select,
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 14px;
+            color: var(--text);
+            font-family: var(--mono);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        select:focus,
+        textarea:focus { border-color: var(--accent); }
+
+        textarea {
+            resize: vertical;
+            min-height: 180px;
+            line-height: 1.6;
+        }
+
+        .meta-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .mini-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 12px;
+            font-family: var(--mono);
+        }
+
+        .mini-link:hover { border-color: var(--accent); color: var(--accent); }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: var(--sans);
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.99); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        .message {
+            display: none;
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: var(--mono);
+            line-height: 1.6;
+        }
+
+        .message.ok {
+            background: rgba(0,229,160,0.08);
+            border: 1px solid var(--accent2);
+            color: var(--accent);
+        }
+
+        .message.err {
+            background: rgba(255,77,109,0.1);
+            border: 1px solid rgba(255,77,109,0.3);
+            color: #ff8fa3;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .result-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .result-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .result-label {
+            font-size: 10px;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 13px;
+            line-height: 1.6;
+            word-break: break-word;
+            font-family: var(--mono);
+        }
+
+        .nav-links {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--muted);
+        }
+
+        .nav-links a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 640px) {
+            .meta-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <div class="user-info">
+        <a class="btn-ghost" href="/painel.html">Menu</a>
+        <span id="username-display">-</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<main>
+    <div class="page-title">Assinar com chave pública de outra pessoa</div>
+    <p class="page-sub">Escreva a mensagem, escolha o destinatário e gere o arquivo usando a chave pública da conta selecionada.</p>
+
+    <div class="card">
+        <div class="helper">
+            <strong>Fluxo desta fase:</strong> o arquivo é gerado com a chave pública do destinatário escolhido. A listagem completa das chaves continua disponível na página de chaves públicas.
+        </div>
+
+        <div class="form-group">
+            <label for="recipient">Destinatário</label>
+            <div class="meta-row">
+                <select id="recipient">
+                    <option value="">Carregando usuários...</option>
+                </select>
+                <a class="mini-link" href="/chaves.html">Ver chaves públicas</a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="public-text">Mensagem</label>
+            <textarea id="public-text" placeholder="Digite a mensagem que será gerada com a chave pública da outra pessoa..."></textarea>
+        </div>
+
+        <button class="btn" id="public-btn" onclick="gerarArquivoPublico()">Gerar arquivo com chave pública</button>
+
+        <div class="message" id="public-msg"></div>
+
+        <div class="result" id="result">
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-label">Destinatário</div>
+                    <div class="result-value" id="recipient-name">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Arquivo Gerado</div>
+                    <div class="result-value" id="file-name">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Modo</div>
+                    <div class="result-value">public_key</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/assinar.html">Assinar com minha chave privada</a>
+        &nbsp;·&nbsp;
+        <a href="/chaves.html">Repositório de chaves</a>
+    </div>
+</main>
+
+<script>
+const API = 'http://localhost:3000/api';
+const userId = localStorage.getItem('userId');
+const username = localStorage.getItem('username');
+
+if (!userId) window.location.href = '/';
+document.getElementById('username-display').textContent = username || '-';
+
+async function carregarUsuarios() {
+    const select = document.getElementById('recipient');
+
+    try {
+        const res = await fetch(`${API}/users/keys`);
+        const users = await res.json();
+        const others = users.filter(user => String(user.id) !== String(userId));
+
+        if (!others.length) {
+            select.innerHTML = '<option value="">Nenhum outro usuário disponível</option>';
+            return;
+        }
+
+        select.innerHTML = '<option value="">Selecione um usuário</option>' +
+            others.map(user => `<option value="${user.id}">${user.username}</option>`).join('');
+    } catch {
+        select.innerHTML = '<option value="">Erro ao carregar usuários</option>';
+    }
+}
+
+async function gerarArquivoPublico() {
+    const recipientUserId = document.getElementById('recipient').value;
+    const text = document.getElementById('public-text').value.trim();
+    const btn = document.getElementById('public-btn');
+
+    hideMessage();
+    document.getElementById('result').style.display = 'none';
+
+    if (!recipientUserId || !text) {
+        return showMessage('Escolha o destinatário e escreva a mensagem.', 'err');
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Gerando...';
+
+    try {
+        const res = await fetch(`${API}/sign/public`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderUserId: userId, recipientUserId, text })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showMessage(data.error || 'Não foi possível gerar o arquivo.', 'err');
+            return;
+        }
+
+        downloadSignedFile(data.signedFile);
+        document.getElementById('recipient-name').textContent = data.recipient.username;
+        document.getElementById('file-name').textContent = data.signedFile.filename;
+        document.getElementById('result').style.display = 'block';
+        showMessage(`Arquivo ${data.signedFile.filename} gerado para ${data.recipient.username}.`, 'ok');
+    } catch {
+        showMessage('Erro de comunicação com o servidor.', 'err');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar arquivo com chave pública';
+    }
+}
+
+function downloadSignedFile(file) {
+    const blob = new Blob([JSON.stringify(file.payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function showMessage(text, type) {
+    const el = document.getElementById('public-msg');
+    el.textContent = text;
+    el.className = `message ${type}`;
+    el.style.display = 'block';
+}
+
+function hideMessage() {
+    const el = document.getElementById('public-msg');
+    el.style.display = 'none';
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/';
+}
+
+carregarUsuarios();
+</script>
+</body>
+</html>

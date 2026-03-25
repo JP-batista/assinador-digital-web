@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinar Documento - Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --surface2: #1a1d24;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --error: #ff4d6d;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 80% 20%, rgba(0,229,160,0.04) 0%, transparent 60%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .btn-ghost,
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-ghost:hover,
+        .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+        main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-sub {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: var(--mono);
+            margin-bottom: 36px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            font-family: var(--mono);
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 14px;
+            color: var(--text);
+            font-family: var(--mono);
+            resize: vertical;
+            min-height: 140px;
+            outline: none;
+            transition: border-color 0.15s;
+            line-height: 1.6;
+        }
+
+        textarea:focus { border-color: var(--accent); }
+
+        .char-count {
+            text-align: right;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-top: 6px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: var(--sans);
+            cursor: pointer;
+            margin-top: 20px;
+            transition: opacity 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.99); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        .result {
+            display: none;
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .badge-ok {
+            background: rgba(0,229,160,0.15);
+            color: var(--accent);
+            border: 1px solid var(--accent2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--mono);
+            text-transform: uppercase;
+        }
+
+        .result-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .result-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .result-item-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: var(--mono);
+            margin-bottom: 6px;
+        }
+
+        .result-item-value {
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--text);
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .result-item-value.highlight {
+            color: var(--accent);
+            font-size: 20px;
+            font-weight: 700;
+            font-family: var(--sans);
+        }
+
+        .copy-btn {
+            float: right;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .file-note {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(0,229,160,0.08);
+            border: 1px solid var(--accent2);
+            display: none;
+        }
+
+        .file-note-title {
+            font-size: 11px;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .file-note-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .file-note-text strong {
+            color: var(--accent);
+            font-family: var(--mono);
+        }
+
+        .nav-links {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--muted);
+        }
+
+        .nav-links a { color: var(--accent); text-decoration: none; }
+        .nav-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <div class="user-info">
+        <a class="btn-ghost" href="/painel.html">Menu</a>
+        <span id="username-display">-</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<main>
+    <div class="page-title">Assinar com minha chave privada</div>
+    <p class="page-sub">Fluxo atual preservado. O texto será assinado com a chave privada RSA-2048 da conta logada.</p>
+
+    <div class="card">
+        <label for="texto">Texto a assinar</label>
+        <textarea id="texto" placeholder="Digite ou cole o conteúdo do documento aqui..." oninput="updateCount()"></textarea>
+        <div class="char-count"><span id="char-count">0</span> caracteres</div>
+
+        <button class="btn" id="btn-assinar" onclick="assinar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Assinar Digitalmente
+        </button>
+
+        <div class="result" id="result">
+            <div class="result-header">
+                <span class="badge-ok">Assinado</span>
+                <span style="font-size:13px; color:var(--muted); font-family:var(--mono)">Guarde o ID para verificação</span>
+            </div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-item-label">ID da Assinatura</div>
+                    <div class="result-item-value highlight" id="sig-id">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">SHA-256 do Texto</div>
+                    <div class="result-item-value" id="sig-hash">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">
+                        Assinatura RSA (hex)
+                        <button class="copy-btn" onclick="copyHex()">copiar</button>
+                    </div>
+                    <div class="result-item-value" id="sig-hex" style="max-height:80px;overflow:hidden;text-overflow:ellipsis;">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">Arquivo Gerado</div>
+                    <div class="result-item-value" id="sig-file-name">-</div>
+                </div>
+            </div>
+
+            <div class="file-note" id="file-note">
+                <div class="file-note-title">Arquivo baixado</div>
+                <div class="file-note-text">
+                    O sistema gerou o arquivo <strong id="file-note-name">-</strong> com a mensagem assinada. Esse arquivo será usado na fase de decodificação.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/verify.html">Verificar assinatura</a>
+        &nbsp;·&nbsp;
+        <a href="/chaves.html">Ver chaves públicas</a>
+    </div>
+</main>
+
+<script>
+const API = 'http://localhost:3000/api';
+
+const userId = localStorage.getItem('userId');
+const username = localStorage.getItem('username');
+let latestSignedFile = null;
+
+if (!userId) window.location.href = '/';
+document.getElementById('username-display').textContent = username || '-';
+
+function updateCount() {
+    document.getElementById('char-count').textContent = document.getElementById('texto').value.length;
+}
+
+async function assinar() {
+    const text = document.getElementById('texto').value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('btn-assinar');
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Assinando...`;
+
+    const res  = await fetch(`${API}/sign`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({userId, text}) });
+    const data = await res.json();
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Assinar Digitalmente`;
+
+    if (res.ok) {
+        document.getElementById('sig-id').textContent   = data.signatureId;
+        document.getElementById('sig-hash').textContent = data.hash;
+        document.getElementById('sig-hex').textContent  = data.signature;
+        document.getElementById('sig-file-name').textContent = data.signedFile?.filename || '-';
+        document.getElementById('result').style.display = 'block';
+        latestSignedFile = data.signedFile || null;
+
+        if (latestSignedFile) {
+            downloadSignedFile(latestSignedFile);
+            document.getElementById('file-note-name').textContent = latestSignedFile.filename;
+            document.getElementById('file-note').style.display = 'block';
+        }
+    }
+}
+
+function copyHex() {
+    const hex = document.getElementById('sig-hex').textContent;
+    navigator.clipboard.writeText(hex);
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'copiado!';
+    setTimeout(() => btn.textContent = 'copiar', 2000);
+}
+
+function downloadSignedFile(file) {
+    const blob = new Blob([JSON.stringify(file.payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/';
+}
+</script>
+</body>
+</html>
