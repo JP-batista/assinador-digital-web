@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Assinaturas - Assinador Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b0c0f;
+            --surface: #13151a;
+            --surface2: #1a1d24;
+            --border: #1e2128;
+            --accent: #00e5a0;
+            --accent2: #005c40;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at top left, rgba(0,229,160,0.08) 0%, transparent 34%),
+                radial-gradient(circle at bottom right, rgba(0,92,64,0.14) 0%, transparent 30%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 48px 24px 64px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .page-sub {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: var(--mono);
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px 10px 36px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-input:focus { border-color: var(--accent); }
+        .search-input::placeholder { color: var(--muted); }
+
+        .count-badge {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .count-badge span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Empty / Loading states */
+        .state-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .state-box svg { margin-bottom: 16px; opacity: 0.4; }
+
+        /* Signature cards */
+        .sig-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .sig-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.15s;
+        }
+
+        .sig-card:hover { border-color: rgba(0,229,160,0.3); }
+
+        .sig-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sig-card-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .sig-id {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            background: rgba(0,229,160,0.1);
+            border: 1px solid var(--accent2);
+            border-radius: 8px;
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+        .sig-preview {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sig-card-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+        }
+
+        .sig-date {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .chevron {
+            color: var(--muted);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .sig-card.open .chevron { transform: rotate(180deg); }
+
+        .sig-card-body {
+            display: none;
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sig-card.open .sig-card-body { display: flex; }
+
+        .field-label {
+            font-size: 10px;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .field-value {
+            font-family: var(--mono);
+            font-size: 13px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            word-break: break-all;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .field-value.message-text {
+            font-family: var(--sans);
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+        .fields-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .btn-verify {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid var(--accent2);
+            color: var(--accent);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-verify:hover { background: rgba(0,229,160,0.08); }
+
+        .verify-result {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .verify-result.valid {
+            background: rgba(0,229,160,0.1);
+            border: 1px solid var(--accent2);
+            color: var(--accent);
+            display: block;
+        }
+
+        .verify-result.invalid {
+            background: rgba(229,72,77,0.1);
+            border: 1px solid rgba(229,72,77,0.3);
+            color: #e5484d;
+            display: block;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 700px) {
+            .fields-row { grid-template-columns: 1fr; }
+            header { padding: 16px 20px; flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-dot"></div>
+        Assinador Digital
+    </div>
+    <div class="user-info">
+        <span id="username-display">-</span>
+        <a class="btn-ghost" href="/painel.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Painel
+        </a>
+    </div>
+</header>
+
+<main>
+    <div class="page-header">
+        <div class="eyebrow">Conta</div>
+        <h1 class="page-title">Histórico de Assinaturas</h1>
+        <p class="page-sub">Todas as assinaturas digitais geradas com sua chave privada.</p>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" id="search" placeholder="Pesquisar por mensagem ou ID..." oninput="filterCards()">
+        </div>
+        <div class="count-badge" id="count-badge"></div>
+    </div>
+
+    <div id="list-container">
+        <div class="state-box" id="loading-state">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div>Carregando histórico...</div>
+        </div>
+        <div class="sig-list" id="sig-list"></div>
+        <div class="state-box" id="empty-state" style="display:none;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>Nenhuma assinatura encontrada.</div>
+        </div>
+        <div class="state-box" id="no-match-state" style="display:none;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div>Nenhum resultado para a pesquisa.</div>
+        </div>
+    </div>
+</main>
+
+<script>
+const userId   = localStorage.getItem('userId');
+const username = localStorage.getItem('username');
+
+if (!userId) window.location.href = '/';
+
+document.getElementById('username-display').textContent = username || '-';
+
+let allSignatures = [];
+
+async function load() {
+    try {
+        const res  = await fetch(`/api/signatures/user/${userId}`);
+        const data = await res.json();
+
+        document.getElementById('loading-state').style.display = 'none';
+
+        if (!data.length) {
+            document.getElementById('empty-state').style.display = 'block';
+            updateCount(0, 0);
+            return;
+        }
+
+        allSignatures = data;
+        renderCards(data);
+        updateCount(data.length, data.length);
+    } catch {
+        document.getElementById('loading-state').innerHTML = '<div style="color:#e5484d">Erro ao carregar histórico.</div>';
+    }
+}
+
+function formatDate(str) {
+    const d = new Date(str.includes('T') ? str : str + 'Z');
+    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderCards(list) {
+    const container = document.getElementById('sig-list');
+    container.innerHTML = '';
+
+    list.forEach(sig => {
+        const card = document.createElement('article');
+        card.className = 'sig-card';
+        card.dataset.id = sig.id;
+
+        const preview = sig.original_text.length > 60
+            ? sig.original_text.slice(0, 60) + '…'
+            : sig.original_text;
+
+        card.innerHTML = `
+            <div class="sig-card-header" onclick="toggleCard(this)">
+                <div class="sig-card-left">
+                    <span class="sig-id">#${sig.id}</span>
+                    <span class="sig-preview">${escHtml(preview)}</span>
+                </div>
+                <div class="sig-card-right">
+                    <span class="sig-date">${formatDate(sig.created_at)}</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+            </div>
+            <div class="sig-card-body">
+                <div>
+                    <div class="field-label">Mensagem assinada</div>
+                    <div class="field-value message-text">${escHtml(sig.original_text)}</div>
+                </div>
+                <div class="fields-row">
+                    <div>
+                        <div class="field-label">SHA-256 Hash</div>
+                        <div class="field-value" style="font-size:11px;">${sig.text_hash}
+                            <button class="copy-btn" onclick="copyText('${sig.text_hash}', this)">copiar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label">Data / Hora</div>
+                        <div class="field-value" style="font-size:12px;">${formatDate(sig.created_at)}</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">Assinatura RSA (hex)</div>
+                    <div class="field-value" style="font-size:11px;max-height:72px;overflow:hidden;">${sig.signature_hex.slice(0, 120)}…
+                        <button class="copy-btn" onclick="copyText('${sig.signature_hex}', this)">copiar</button>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a class="btn-verify" href="/verify.html?id=${sig.id}" target="_blank">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 1.66-.67 3.16-1.76 4.24A5.98 5.98 0 0 1 15 18H9a6 6 0 0 1 0-12h6a6 6 0 0 1 6 6z"/></svg>
+                        Verificar assinatura
+                    </a>
+                    <button class="btn-verify" onclick="downloadFile(${sig.id})">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Baixar .adsig.json
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function toggleCard(header) {
+    header.parentElement.classList.toggle('open');
+}
+
+function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'copiado!';
+        btn.style.color = 'var(--accent)';
+        setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+    });
+}
+
+function downloadFile(sigId) {
+    const sig = allSignatures.find(s => s.id === sigId);
+    if (!sig) return;
+
+    const payload = {
+        version: 1,
+        mode: 'private_key',
+        algorithm: 'RSA-SHA256',
+        signatureId: sig.id,
+        signerUserId: Number(userId),
+        signerUsername: username,
+        signedAt: sig.created_at,
+        message: sig.original_text,
+        hash: sig.text_hash,
+        signature: sig.signature_hex,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `assinatura-${sig.id}.adsig.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function filterCards() {
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    document.getElementById('empty-state').style.display  = 'none';
+    document.getElementById('no-match-state').style.display = 'none';
+
+    if (!q) {
+        renderCards(allSignatures);
+        updateCount(allSignatures.length, allSignatures.length);
+        return;
+    }
+
+    const filtered = allSignatures.filter(s =>
+        s.original_text.toLowerCase().includes(q) ||
+        String(s.id).includes(q) ||
+        s.text_hash.toLowerCase().includes(q)
+    );
+
+    renderCards(filtered);
+    updateCount(filtered.length, allSignatures.length);
+
+    if (!filtered.length) {
+        document.getElementById('sig-list').innerHTML = '';
+        document.getElementById('no-match-state').style.display = 'block';
+    }
+}
+
+function updateCount(shown, total) {
+    const el = document.getElementById('count-badge');
+    if (total === 0) { el.textContent = ''; return; }
+    el.innerHTML = shown === total
+        ? `<span>${total}</span> assinatura${total !== 1 ? 's' : ''}`
+        : `<span>${shown}</span> de ${total} assinatura${total !== 1 ? 's' : ''}`;
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+load();
+</script>
+</body>
+</html>

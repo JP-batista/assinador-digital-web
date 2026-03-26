@@ -120,9 +120,7 @@
             line-height: 1.7;
         }
 
-        .helper strong {
-            color: var(--accent);
-        }
+        .helper strong { color: var(--accent); }
 
         .form-group {
             margin-bottom: 18px;
@@ -139,7 +137,6 @@
             font-family: var(--mono);
         }
 
-        select,
         textarea {
             width: 100%;
             background: var(--bg);
@@ -151,39 +148,76 @@
             font-family: var(--mono);
             outline: none;
             transition: border-color 0.15s;
-        }
-
-        select:focus,
-        textarea:focus { border-color: var(--accent); }
-
-        textarea {
             resize: vertical;
             min-height: 180px;
             line-height: 1.6;
         }
 
-        .meta-row {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            align-items: end;
+        textarea:focus { border-color: var(--accent); }
+
+        /* File drop zone */
+        .drop-zone {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
         }
 
-        .mini-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 48px;
-            padding: 0 14px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(0,229,160,0.04);
+        }
+
+        .drop-zone.loaded {
+            border-color: var(--accent2);
+            background: rgba(0,229,160,0.06);
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-icon {
             color: var(--muted);
-            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.15s;
+        }
+
+        .drop-zone.loaded .drop-icon { color: var(--accent); }
+
+        .drop-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .drop-hint {
             font-size: 12px;
             font-family: var(--mono);
+            color: var(--muted);
         }
 
-        .mini-link:hover { border-color: var(--accent); color: var(--accent); }
+        .drop-zone.loaded .drop-hint { color: var(--accent); }
+
+        .file-info {
+            display: none;
+            margin-top: 10px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .drop-zone.loaded .file-info { display: block; }
 
         .btn {
             width: 100%;
@@ -269,16 +303,7 @@
             color: var(--muted);
         }
 
-        .nav-links a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        @media (max-width: 640px) {
-            .meta-row {
-                grid-template-columns: 1fr;
-            }
-        }
+        .nav-links a { color: var(--accent); text-decoration: none; }
     </style>
 </head>
 <body>
@@ -296,45 +321,44 @@
 
 <main>
     <div class="page-title">Assinar com chave pública de outra pessoa</div>
-    <p class="page-sub">Escreva a mensagem, escolha o destinatário e gere o arquivo usando a chave pública da conta selecionada.</p>
+    <p class="page-sub">Envie o arquivo <code style="color:var(--accent)">.pem</code> com a chave pública do destinatário e escreva a mensagem a ser cifrada.</p>
 
     <div class="card">
         <div class="helper">
-            <strong>Fluxo desta fase:</strong> o arquivo é gerado com a chave pública do destinatário escolhido. A listagem completa das chaves continua disponível na página de chaves públicas.
+            <strong>Como funciona:</strong> a mensagem é cifrada com a chave pública fornecida. Somente quem possuir a chave privada correspondente conseguirá decodificar o arquivo gerado.
         </div>
 
         <div class="form-group">
-            <label for="recipient">Destinatário</label>
-            <div class="meta-row">
-                <select id="recipient">
-                    <option value="">Carregando usuários...</option>
-                </select>
-                <a class="mini-link" href="/chaves.html">Ver chaves públicas</a>
+            <label>Chave pública do destinatário (.pem)</label>
+            <div class="drop-zone" id="drop-zone">
+                <input type="file" id="key-file" accept=".pem,.txt" onchange="onFileChange(this)">
+                <div class="drop-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="drop-title" id="drop-title">Clique ou arraste o arquivo aqui</div>
+                <div class="drop-hint" id="drop-hint">Aceita arquivos .pem</div>
+                <div class="file-info" id="file-info"></div>
             </div>
         </div>
 
         <div class="form-group">
             <label for="public-text">Mensagem</label>
-            <textarea id="public-text" placeholder="Digite a mensagem que será gerada com a chave pública da outra pessoa..."></textarea>
+            <textarea id="public-text" placeholder="Digite a mensagem que será cifrada com a chave pública..."></textarea>
         </div>
 
-        <button class="btn" id="public-btn" onclick="gerarArquivoPublico()">Gerar arquivo com chave pública</button>
+        <button class="btn" id="public-btn" onclick="gerarArquivoPublico()">Gerar arquivo cifrado</button>
 
         <div class="message" id="public-msg"></div>
 
         <div class="result" id="result">
             <div class="result-grid">
                 <div class="result-item">
-                    <div class="result-label">Destinatário</div>
-                    <div class="result-value" id="recipient-name">-</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">Arquivo Gerado</div>
+                    <div class="result-label">Arquivo gerado</div>
                     <div class="result-value" id="file-name">-</div>
                 </div>
                 <div class="result-item">
                     <div class="result-label">Modo</div>
-                    <div class="result-value">public_key</div>
+                    <div class="result-value">public_key — RSA-OAEP-SHA256</div>
                 </div>
             </div>
         </div>
@@ -348,104 +372,118 @@
 </main>
 
 <script>
-const API = 'http://localhost:3000/api';
-const userId = localStorage.getItem('userId');
+const API      = 'http://localhost:3000/api';
+const userId   = localStorage.getItem('userId');
 const username = localStorage.getItem('username');
 
 if (!userId) window.location.href = '/';
 document.getElementById('username-display').textContent = username || '-';
 
-async function carregarUsuarios() {
-    const select = document.getElementById('recipient');
+let publicKeyPem = null;
 
-    try {
-        const res = await fetch(`${API}/users/keys`);
-        const users = await res.json();
-        const others = users.filter(user => String(user.id) !== String(userId));
+// Drag-and-drop
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) readKeyFile(file);
+});
 
-        if (!others.length) {
-            select.innerHTML = '<option value="">Nenhum outro usuário disponível</option>';
+function onFileChange(input) {
+    if (input.files[0]) readKeyFile(input.files[0]);
+}
+
+function readKeyFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const content = e.target.result.trim();
+        if (!content.includes('BEGIN') || !content.includes('PUBLIC KEY')) {
+            showMessage('O arquivo não parece ser uma chave pública PEM válida.', 'err');
+            resetDropZone();
             return;
         }
+        publicKeyPem = content;
+        dropZone.classList.add('loaded');
+        document.getElementById('drop-title').textContent = file.name;
+        document.getElementById('drop-hint').textContent = 'Chave carregada com sucesso';
+        document.getElementById('file-info').textContent =
+            `${(file.size / 1024).toFixed(1)} KB · ${file.lastModifiedDate ? new Date(file.lastModifiedDate).toLocaleDateString('pt-BR') : ''}`;
+        hideMessage();
+    };
+    reader.readAsText(file);
+}
 
-        select.innerHTML = '<option value="">Selecione um usuário</option>' +
-            others.map(user => `<option value="${user.id}">${user.username}</option>`).join('');
-    } catch {
-        select.innerHTML = '<option value="">Erro ao carregar usuários</option>';
-    }
+function resetDropZone() {
+    publicKeyPem = null;
+    dropZone.classList.remove('loaded');
+    document.getElementById('drop-title').textContent = 'Clique ou arraste o arquivo aqui';
+    document.getElementById('drop-hint').textContent = 'Aceita arquivos .pem';
+    document.getElementById('file-info').textContent = '';
+    document.getElementById('key-file').value = '';
 }
 
 async function gerarArquivoPublico() {
-    const recipientUserId = document.getElementById('recipient').value;
     const text = document.getElementById('public-text').value.trim();
-    const btn = document.getElementById('public-btn');
+    const btn  = document.getElementById('public-btn');
 
     hideMessage();
     document.getElementById('result').style.display = 'none';
 
-    if (!recipientUserId || !text) {
-        return showMessage('Escolha o destinatário e escreva a mensagem.', 'err');
-    }
+    if (!publicKeyPem) return showMessage('Envie o arquivo .pem com a chave pública do destinatário.', 'err');
+    if (!text)         return showMessage('Escreva a mensagem antes de gerar o arquivo.', 'err');
 
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Gerando...';
 
     try {
-        const res = await fetch(`${API}/sign/public`, {
+        const res  = await fetch(`${API}/sign/public`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ senderUserId: userId, recipientUserId, text })
+            body: JSON.stringify({ senderUserId: userId, publicKeyPem, text }),
         });
         const data = await res.json();
 
-        if (!res.ok) {
-            showMessage(data.error || 'Não foi possível gerar o arquivo.', 'err');
-            return;
-        }
+        if (!res.ok) return showMessage(data.error || 'Não foi possível gerar o arquivo.', 'err');
 
         downloadSignedFile(data.signedFile);
-        document.getElementById('recipient-name').textContent = data.recipient.username;
         document.getElementById('file-name').textContent = data.signedFile.filename;
-        document.getElementById('result').style.display = 'block';
-        showMessage(`Arquivo ${data.signedFile.filename} gerado para ${data.recipient.username}.`, 'ok');
+        document.getElementById('result').style.display  = 'block';
+        showMessage(`Arquivo ${data.signedFile.filename} gerado e baixado com sucesso.`, 'ok');
     } catch {
         showMessage('Erro de comunicação com o servidor.', 'err');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'Gerar arquivo com chave pública';
+        btn.disabled    = false;
+        btn.textContent = 'Gerar arquivo cifrado';
     }
 }
 
 function downloadSignedFile(file) {
     const blob = new Blob([JSON.stringify(file.payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = file.filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = file.filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 
 function showMessage(text, type) {
     const el = document.getElementById('public-msg');
-    el.textContent = text;
-    el.className = `message ${type}`;
-    el.style.display = 'block';
+    el.textContent    = text;
+    el.className      = `message ${type}`;
+    el.style.display  = 'block';
 }
 
 function hideMessage() {
-    const el = document.getElementById('public-msg');
-    el.style.display = 'none';
+    document.getElementById('public-msg').style.display = 'none';
 }
 
 function logout() {
     localStorage.clear();
     window.location.href = '/';
 }
-
-carregarUsuarios();
 </script>
 </body>
 </html>

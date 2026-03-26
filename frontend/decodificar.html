@@ -11,12 +11,12 @@
         :root {
             --bg: #0b0c0f;
             --surface: #13151a;
+            --surface2: #1a1d24;
             --border: #1e2128;
             --accent: #00e5a0;
             --accent2: #005c40;
             --text: #e8eaf0;
             --muted: #6b7280;
-            --error: #ff4d6d;
             --mono: 'Space Mono', monospace;
             --sans: 'Syne', sans-serif;
         }
@@ -35,29 +35,10 @@
             justify-content: space-between;
             gap: 16px;
         }
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 15px;
-        }
-        .brand-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent);
-            border-radius: 50%;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-size: 13px;
-            color: var(--muted);
-            font-family: var(--mono);
-        }
-        .btn-ghost,
-        .btn-logout {
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; }
+        .brand-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+        .user-info { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); font-family: var(--mono); }
+        .btn-ghost, .btn-logout {
             background: transparent;
             border: 1px solid var(--border);
             color: var(--muted);
@@ -69,32 +50,11 @@
             transition: all 0.15s;
             text-decoration: none;
         }
-        .btn-ghost:hover,
-        .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
-        main {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 48px 24px 64px;
-        }
-        .page-title {
-            font-size: 30px;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            margin-bottom: 8px;
-        }
-        .page-sub {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.7;
-            font-family: var(--mono);
-            margin-bottom: 28px;
-        }
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 28px;
-        }
+        .btn-ghost:hover, .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+        main { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+        .page-title { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 8px; }
+        .page-sub { color: var(--muted); font-size: 14px; line-height: 1.7; font-family: var(--mono); margin-bottom: 28px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 28px; }
         .hint {
             margin-bottom: 20px;
             padding: 14px;
@@ -105,19 +65,51 @@
             line-height: 1.7;
             color: var(--text);
         }
-        .form-group {
-            margin-bottom: 18px;
+
+        /* Field group with toggle */
+        .field-group { margin-bottom: 18px; }
+        .field-group.hidden { display: none; }
+
+        .field-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
         }
-        label {
-            display: block;
+
+        .field-label {
             font-size: 11px;
             font-weight: 700;
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-bottom: 10px;
             font-family: var(--mono);
         }
+
+        .toggle-wrap {
+            display: flex;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 5px 12px;
+            font-size: 11px;
+            font-family: var(--mono);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .toggle-btn.active {
+            background: var(--surface2);
+            color: var(--accent);
+        }
+
         input[type="file"] {
             width: 100%;
             background: var(--bg);
@@ -126,20 +118,35 @@
             padding: 12px;
             color: var(--text);
             font-family: var(--mono);
+            font-size: 13px;
         }
-        .meta-box,
-        .result-item {
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 13px 14px;
+            font-size: 12px;
+            color: var(--text);
+            font-family: var(--mono);
+            outline: none;
+            transition: border-color 0.15s;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        textarea:focus { border-color: var(--accent); }
+        textarea::placeholder { color: var(--muted); }
+
+        .meta-box, .result-item {
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 14px;
         }
-        .meta-box {
-            display: none;
-            margin-bottom: 18px;
-        }
-        .meta-title,
-        .result-label {
+        .meta-box { display: none; margin-bottom: 18px; }
+        .meta-title, .result-label {
             font-size: 10px;
             font-family: var(--mono);
             text-transform: uppercase;
@@ -147,17 +154,8 @@
             color: var(--muted);
             margin-bottom: 8px;
         }
-        .meta-value,
-        .result-value {
-            font-size: 13px;
-            line-height: 1.7;
-            word-break: break-word;
-            font-family: var(--mono);
-        }
-        .extra-key {
-            display: none;
-            margin-bottom: 18px;
-        }
+        .meta-value, .result-value { font-size: 13px; line-height: 1.7; word-break: break-word; font-family: var(--mono); }
+
         .btn {
             width: 100%;
             padding: 14px;
@@ -174,6 +172,7 @@
         .btn:hover { opacity: 0.9; }
         .btn:active { transform: scale(0.99); }
         .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
         .message {
             display: none;
             margin-top: 18px;
@@ -183,26 +182,11 @@
             font-family: var(--mono);
             line-height: 1.6;
         }
-        .message.ok {
-            background: rgba(0,229,160,0.08);
-            border: 1px solid var(--accent2);
-            color: var(--accent);
-        }
-        .message.err {
-            background: rgba(255,77,109,0.1);
-            border: 1px solid rgba(255,77,109,0.3);
-            color: #ff8fa3;
-        }
-        .result {
-            display: none;
-            margin-top: 22px;
-            border-top: 1px solid var(--border);
-            padding-top: 22px;
-        }
-        .result-grid {
-            display: grid;
-            gap: 12px;
-        }
+        .message.ok { background: rgba(0,229,160,0.08); border: 1px solid var(--accent2); color: var(--accent); }
+        .message.err { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); color: #ff8fa3; }
+
+        .result { display: none; margin-top: 22px; border-top: 1px solid var(--border); padding-top: 22px; }
+        .result-grid { display: grid; gap: 12px; }
     </style>
 </head>
 <body>
@@ -220,18 +204,30 @@
 
 <main>
     <div class="page-title">Decodificar arquivo da mensagem</div>
-    <p class="page-sub">Envie o arquivo gerado pelo sistema. A página identifica o modo do arquivo e aplica a regra correta para decodificar.</p>
+    <p class="page-sub">Envie o arquivo ou cole o conteúdo diretamente. A página identifica o modo e aplica a regra correta para decodificar.</p>
 
     <div class="card">
         <div class="hint">
-            Se o arquivo estiver no modo <strong>`private_key`</strong> e for da sua conta, o sistema usa a chave já cadastrada.
+            Se o arquivo estiver no modo <strong>private_key</strong> e for da sua conta, o sistema usa a chave já cadastrada.
             Se for de outra pessoa, envie também a chave pública dessa pessoa.
-            Se estiver no modo <strong>`public_key`</strong>, o sistema usa a chave privada da conta destinatária.
+            Se estiver no modo <strong>public_key</strong>, envie sua chave privada para decodificar.
         </div>
 
-        <div class="form-group">
-            <label for="signed-file">Arquivo da mensagem</label>
-            <input type="file" id="signed-file" accept=".json,.adsig.json" onchange="loadSignedFile(event)">
+        <!-- Arquivo da mensagem -->
+        <div class="field-group" id="group-msg">
+            <div class="field-header">
+                <span class="field-label">Arquivo da mensagem</span>
+                <div class="toggle-wrap">
+                    <button class="toggle-btn active" onclick="setMode('msg','file',this)">Arquivo</button>
+                    <button class="toggle-btn" onclick="setMode('msg','text',this)">Colar texto</button>
+                </div>
+            </div>
+            <div id="msg-file-input">
+                <input type="file" id="signed-file" accept=".json,.adsig.json" onchange="loadSignedFile(event)">
+            </div>
+            <div id="msg-text-input" style="display:none;">
+                <textarea id="signed-text" rows="6" placeholder='Cole aqui o conteúdo JSON do arquivo .adsig.json...' oninput="parseSignedText()"></textarea>
+            </div>
         </div>
 
         <div class="meta-box" id="meta-box">
@@ -239,9 +235,38 @@
             <div class="meta-value" id="meta-value">-</div>
         </div>
 
-        <div class="form-group extra-key" id="extra-key-group">
-            <label for="public-key-file">Chave pública do remetente</label>
-            <input type="file" id="public-key-file" accept=".pem,.txt" onchange="loadPublicKey(event)">
+        <!-- Chave pública do remetente (modo private_key de outro usuário) -->
+        <div class="field-group hidden" id="group-pubkey">
+            <div class="field-header">
+                <span class="field-label">Chave pública do remetente</span>
+                <div class="toggle-wrap">
+                    <button class="toggle-btn active" onclick="setMode('pubkey','file',this)">Arquivo</button>
+                    <button class="toggle-btn" onclick="setMode('pubkey','text',this)">Colar texto</button>
+                </div>
+            </div>
+            <div id="pubkey-file-input">
+                <input type="file" id="public-key-file" accept=".pem,.txt" onchange="loadKeyFile(event,'public')">
+            </div>
+            <div id="pubkey-text-input" style="display:none;">
+                <textarea id="public-key-text" rows="5" placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----" oninput="loadedPublicKey = this.value"></textarea>
+            </div>
+        </div>
+
+        <!-- Chave privada do destinatário (modo public_key) -->
+        <div class="field-group hidden" id="group-privkey">
+            <div class="field-header">
+                <span class="field-label">Sua chave privada</span>
+                <div class="toggle-wrap">
+                    <button class="toggle-btn active" onclick="setMode('privkey','file',this)">Arquivo</button>
+                    <button class="toggle-btn" onclick="setMode('privkey','text',this)">Colar texto</button>
+                </div>
+            </div>
+            <div id="privkey-file-input">
+                <input type="file" id="private-key-file" accept=".pem,.txt" onchange="loadKeyFile(event,'private')">
+            </div>
+            <div id="privkey-text-input" style="display:none;">
+                <textarea id="private-key-text" rows="5" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" oninput="loadedPrivateKey = this.value"></textarea>
+            </div>
         </div>
 
         <button class="btn" id="decode-btn" onclick="decodeFile()" disabled>Decodificar arquivo</button>
@@ -260,7 +285,7 @@
                 </div>
                 <div class="result-item">
                     <div class="result-label">Mensagem</div>
-                    <div class="result-value" id="result-message">-</div>
+                    <div class="result-value" id="result-message" style="white-space:pre-wrap;">-</div>
                 </div>
                 <div class="result-item">
                     <div class="result-label">Origem</div>
@@ -272,139 +297,197 @@
 </main>
 
 <script>
-const API = 'http://localhost:3000/api';
-const userId = localStorage.getItem('userId');
+const API      = 'http://localhost:3000/api';
+const userId   = localStorage.getItem('userId');
 const username = localStorage.getItem('username');
 
-let loadedPayload = null;
-let loadedPublicKey = '';
+let loadedPayload    = null;
+let loadedPublicKey  = '';
+let loadedPrivateKey = '';
 
 if (!userId) window.location.href = '/';
 document.getElementById('username-display').textContent = username || '-';
 
+/* ── Toggle arquivo / colar texto ── */
+function setMode(field, mode, btn) {
+    const fileEl = document.getElementById(`${field}-file-input`);
+    const textEl = document.getElementById(`${field}-text-input`);
+
+    fileEl.style.display = mode === 'file' ? 'block' : 'none';
+    textEl.style.display = mode === 'text' ? 'block' : 'none';
+
+    btn.closest('.toggle-wrap').querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // limpa valor do campo oposto
+    if (field === 'msg') {
+        loadedPayload = null;
+        document.getElementById('meta-box').style.display = 'none';
+        document.getElementById('decode-btn').disabled = true;
+        hideMessage();
+        if (mode === 'file') document.getElementById('signed-text').value = '';
+        else document.getElementById('signed-file').value = '';
+    }
+    if (field === 'pubkey') {
+        loadedPublicKey = '';
+        if (mode === 'file') document.getElementById('public-key-text').value = '';
+        else document.getElementById('public-key-file').value = '';
+    }
+    if (field === 'privkey') {
+        loadedPrivateKey = '';
+        if (mode === 'file') document.getElementById('private-key-text').value = '';
+        else document.getElementById('private-key-file').value = '';
+    }
+}
+
+/* ── Carregar arquivo .adsig.json ── */
 function loadSignedFile(event) {
     const file = event.target.files[0];
-    resetState();
+    resetPayload();
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
-        try {
-            loadedPayload = JSON.parse(reader.result);
-            if (!loadedPayload?.mode) throw new Error();
-
-            document.getElementById('meta-value').textContent =
-                `modo=${loadedPayload.mode} | algoritmo=${loadedPayload.algorithm || '-'} | arquivo carregado com sucesso`;
-            document.getElementById('meta-box').style.display = 'block';
-
-            const needsExternalKey = loadedPayload.mode === 'private_key' && String(loadedPayload.signerUserId) !== String(userId);
-            document.getElementById('extra-key-group').style.display = needsExternalKey ? 'block' : 'none';
-            document.getElementById('decode-btn').disabled = false;
-        } catch {
-            loadedPayload = null;
-            showMessage('Arquivo inválido. Envie um .adsig.json gerado pelo sistema.', 'err');
-        }
-    };
+    reader.onload = () => parsePayload(reader.result);
     reader.readAsText(file);
 }
 
-function loadPublicKey(event) {
-    const file = event.target.files[0];
-    loadedPublicKey = '';
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        loadedPublicKey = reader.result;
-    };
-    reader.readAsText(file);
+/* ── Colar JSON da mensagem ── */
+function parseSignedText() {
+    const raw = document.getElementById('signed-text').value.trim();
+    resetPayload();
+    if (!raw) return;
+    parsePayload(raw);
 }
 
-async function decodeFile() {
-    if (!loadedPayload) {
-        return showMessage('Envie o arquivo da mensagem.', 'err');
+function parsePayload(raw) {
+    try {
+        const parsed = JSON.parse(raw);
+        if (!parsed?.mode) throw new Error();
+        loadedPayload = parsed;
+
+        document.getElementById('meta-value').textContent =
+            `modo=${loadedPayload.mode} | algoritmo=${loadedPayload.algorithm || '-'} | conteúdo reconhecido`;
+        document.getElementById('meta-box').style.display = 'block';
+
+        const needsPublicKey  = loadedPayload.mode === 'private_key' && String(loadedPayload.signerUserId) !== String(userId);
+        const needsPrivateKey = loadedPayload.mode === 'public_key';
+
+        document.getElementById('group-pubkey').classList.toggle('hidden', !needsPublicKey);
+        document.getElementById('group-privkey').classList.toggle('hidden', !needsPrivateKey);
+
+        document.getElementById('decode-btn').disabled = false;
+    } catch {
+        loadedPayload = null;
+        showMessage('Conteúdo inválido. Verifique se é um .adsig.json gerado pelo sistema.', 'err');
     }
+}
+
+/* ── Carregar arquivo de chave (.pem) ── */
+function loadKeyFile(event, type) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        if (type === 'private') loadedPrivateKey = reader.result;
+        else                    loadedPublicKey  = reader.result;
+    };
+    reader.readAsText(file);
+}
+
+/* ── Decodificar ── */
+async function decodeFile() {
+    if (!loadedPayload) return showMessage('Forneça o arquivo ou cole o conteúdo da mensagem.', 'err');
+
+    // Sincronizar textareas caso o usuário tenha colado sem disparar oninput
+    const privTA = document.getElementById('private-key-text');
+    const pubTA  = document.getElementById('public-key-text');
+    if (privTA && privTA.closest('#privkey-text-input').style.display !== 'none')
+        loadedPrivateKey = privTA.value;
+    if (pubTA && pubTA.closest('#pubkey-text-input').style.display !== 'none')
+        loadedPublicKey = pubTA.value;
 
     hideMessage();
     document.getElementById('result').style.display = 'none';
 
     const btn = document.getElementById('decode-btn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Decodificando...';
 
     try {
         let endpoint = '';
-        let body = {};
+        let body     = {};
 
         if (loadedPayload.mode === 'private_key') {
             if (String(loadedPayload.signerUserId) === String(userId)) {
                 endpoint = '/decode/private/self';
-                body = { userId, filePayload: loadedPayload };
+                body     = { userId, filePayload: loadedPayload };
             } else {
                 if (!loadedPublicKey.trim()) {
-                    btn.disabled = false;
+                    btn.disabled    = false;
                     btn.textContent = 'Decodificar arquivo';
-                    return showMessage('Envie também a chave pública da pessoa que assinou.', 'err');
+                    return showMessage('Envie ou cole a chave pública da pessoa que assinou.', 'err');
                 }
                 endpoint = '/decode/private/public-key';
-                body = { filePayload: loadedPayload, publicKey: loadedPublicKey };
+                body     = { filePayload: loadedPayload, publicKey: loadedPublicKey };
             }
         } else if (loadedPayload.mode === 'public_key') {
+            if (!loadedPrivateKey.trim()) {
+                btn.disabled    = false;
+                btn.textContent = 'Decodificar arquivo';
+                return showMessage('Envie ou cole sua chave privada para decodificar este arquivo.', 'err');
+            }
             endpoint = '/decode/public';
-            body = { userId, filePayload: loadedPayload };
+            body     = { privateKeyPem: loadedPrivateKey, filePayload: loadedPayload };
         } else {
-            btn.disabled = false;
+            btn.disabled    = false;
             btn.textContent = 'Decodificar arquivo';
             return showMessage('Modo de arquivo não suportado.', 'err');
         }
 
-        const res = await fetch(`${API}${endpoint}`, {
+        const res  = await fetch(`${API}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
         });
         const data = await res.json();
 
-        if (!res.ok) {
-            showMessage(data.error || 'Não foi possível decodificar o arquivo.', 'err');
-            return;
-        }
+        if (!res.ok) return showMessage(data.error || 'Não foi possível decodificar o arquivo.', 'err');
 
-        document.getElementById('result-status').textContent = data.status;
-        document.getElementById('result-mode').textContent = data.mode;
+        document.getElementById('result-status').textContent  = data.status;
+        document.getElementById('result-mode').textContent    = data.mode;
         document.getElementById('result-message').textContent = data.message;
-        document.getElementById('result-origin').textContent =
-            data.signerUsername || data.senderUsername || loadedPayload.signerUsername || loadedPayload.senderUsername || '-';
+        document.getElementById('result-origin').textContent  =
+            data.signerUsername || data.senderUsername ||
+            loadedPayload.signerUsername || loadedPayload.senderUsername || '-';
         document.getElementById('result').style.display = 'block';
         showMessage('Arquivo processado com sucesso.', 'ok');
     } catch {
         showMessage('Erro de comunicação com o servidor.', 'err');
     } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = 'Decodificar arquivo';
     }
 }
 
-function resetState() {
+function resetPayload() {
     loadedPayload = null;
-    loadedPublicKey = '';
-    document.getElementById('meta-box').style.display = 'none';
-    document.getElementById('extra-key-group').style.display = 'none';
-    document.getElementById('decode-btn').disabled = true;
-    document.getElementById('result').style.display = 'none';
+    document.getElementById('meta-box').style.display          = 'none';
+    document.getElementById('group-pubkey').classList.add('hidden');
+    document.getElementById('group-privkey').classList.add('hidden');
+    document.getElementById('decode-btn').disabled             = true;
+    document.getElementById('result').style.display            = 'none';
     hideMessage();
 }
 
 function showMessage(text, type) {
     const el = document.getElementById('decode-msg');
-    el.textContent = text;
-    el.className = `message ${type}`;
+    el.textContent   = text;
+    el.className     = `message ${type}`;
     el.style.display = 'block';
 }
 
 function hideMessage() {
-    const el = document.getElementById('decode-msg');
-    el.style.display = 'none';
+    document.getElementById('decode-msg').style.display = 'none';
 }
 
 function logout() {

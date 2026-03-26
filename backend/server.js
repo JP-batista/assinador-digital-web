@@ -143,46 +143,37 @@ app.post('/api/sign', (req, res) => {
 });
 
 app.post('/api/sign/public', (req, res) => {
-    const { senderUserId, recipientUserId, text } = req.body;
-    if (!senderUserId || !recipientUserId || !text)
-        return res.status(400).json({ error: 'senderUserId, recipientUserId e text sÃ£o obrigatÃ³rios.' });
-
-    if (String(senderUserId) === String(recipientUserId))
-        return res.status(400).json({ error: 'Escolha outra pessoa para usar a chave pÃºblica.' });
+    const { senderUserId, publicKeyPem, text } = req.body;
+    if (!senderUserId || !publicKeyPem || !text)
+        return res.status(400).json({ error: 'senderUserId, publicKeyPem e text são obrigatórios.' });
 
     db.get('SELECT id, username FROM users WHERE id = ?', [senderUserId], (err, sender) => {
-        if (!sender) return res.status(404).json({ error: 'UsuÃ¡rio remetente nÃ£o encontrado.' });
+        if (!sender) return res.status(404).json({ error: 'Usuário remetente não encontrado.' });
 
-        db.get('SELECT id, username, public_key FROM users WHERE id = ?', [recipientUserId], (err2, recipient) => {
-            if (!recipient) return res.status(404).json({ error: 'UsuÃ¡rio destinatÃ¡rio nÃ£o encontrado.' });
-
-            const encryptedMessage = crypto.publicEncrypt(
+        let encryptedMessage;
+        try {
+            encryptedMessage = crypto.publicEncrypt(
                 {
-                    key: recipient.public_key,
+                    key: publicKeyPem,
                     padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
                     oaepHash: 'sha256',
                 },
                 Buffer.from(text, 'utf8')
             ).toString('base64');
+        } catch {
+            return res.status(400).json({ error: 'Chave pública inválida ou incompatível.' });
+        }
 
-            const signedFile = buildPublicKeyMessageFile({
-                senderUserId: sender.id,
-                senderUsername: sender.username,
-                recipientUserId: recipient.id,
-                recipientUsername: recipient.username,
-                encryptedMessage,
-                signedAt: new Date().toISOString(),
-            });
-
-            res.json({
-                message: 'Arquivo gerado com a chave pÃºblica do destinatÃ¡rio.',
-                recipient: {
-                    id: recipient.id,
-                    username: recipient.username,
-                },
-                signedFile,
-            });
+        const signedFile = buildPublicKeyMessageFile({
+            senderUserId: sender.id,
+            senderUsername: sender.username,
+            recipientUserId: null,
+            recipientUsername: null,
+            encryptedMessage,
+            signedAt: new Date().toISOString(),
         });
+
+        res.json({ message: 'Arquivo gerado com a chave pública fornecida.', signedFile });
     });
 });
 
@@ -222,42 +213,35 @@ app.post('/api/decode/private/public-key', (req, res) => {
 });
 
 app.post('/api/decode/public', (req, res) => {
-    const { userId, filePayload } = req.body;
-    if (!userId || !filePayload)
-        return res.status(400).json({ error: 'userId e filePayload são obrigatórios.' });
+    const { privateKeyPem, filePayload } = req.body;
+    if (!privateKeyPem || !filePayload)
+        return res.status(400).json({ error: 'privateKeyPem e filePayload são obrigatórios.' });
 
     if (filePayload.mode !== 'public_key')
         return res.status(400).json({ error: 'O arquivo enviado não é do tipo public_key.' });
 
-    if (String(filePayload.recipientUserId) !== String(userId))
-        return res.status(403).json({ error: 'Esse arquivo foi gerado para outro usuário.' });
+    try {
+        const message = crypto.privateDecrypt(
+            {
+                key: privateKeyPem,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+            },
+            Buffer.from(filePayload.encryptedMessage, 'base64')
+        ).toString('utf8');
 
-    db.get('SELECT private_key FROM users WHERE id = ?', [userId], (err, user) => {
-        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-
-        try {
-            const message = crypto.privateDecrypt(
-                {
-                    key: user.private_key,
-                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: 'sha256',
-                },
-                Buffer.from(filePayload.encryptedMessage, 'base64')
-            ).toString('utf8');
-
-            res.json({
-                mode: filePayload.mode,
-                algorithm: filePayload.algorithm,
-                message,
-                senderUsername: filePayload.senderUsername,
-                recipientUsername: filePayload.recipientUsername,
-                signedAt: filePayload.signedAt,
-                status: 'DECODIFICADA',
-            });
-        } catch {
-            res.status(400).json({ error: 'Não foi possível decodificar o arquivo com a chave privada da conta.' });
-        }
-    });
+        res.json({
+            mode: filePayload.mode,
+            algorithm: filePayload.algorithm,
+            message,
+            senderUsername: filePayload.senderUsername,
+            recipientUsername: filePayload.recipientUsername,
+            signedAt: filePayload.signedAt,
+            status: 'DECODIFICADA',
+        });
+    } catch {
+        res.status(400).json({ error: 'Não foi possível decodificar o arquivo. Verifique se a chave privada é a correta.' });
+    }
 });
 
 // ─── VERIFICAR POR ID ────────────────────────────────────────────────────────
@@ -319,6 +303,19 @@ app.post('/api/verify', (req, res) => {
             algorithm: 'RSA-SHA256',
             date: row.created_at,
         });
+    });
+});
+
+// ─── HISTÓRICO DE ASSINATURAS DO USUÁRIO ─────────────────────────────────────
+app.get('/api/signatures/user/:userId', (req, res) => {
+    const Q = `SELECT id, original_text, text_hash, signature_hex, created_at
+               FROM signatures
+               WHERE user_id = ?
+               ORDER BY created_at DESC`;
+
+    db.all(Q, [req.params.userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Erro ao buscar histórico.' });
+        res.json(rows || []);
     });
 });
 
